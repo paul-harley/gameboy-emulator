@@ -1,0 +1,65 @@
+# Visual Studio user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+Debug/
+Release/
+x64/
+x86/
+ARM/
+ARM64/
+out/
+build/
+
+# Intermediate build files
+[Bb]in/
+[Oo]bj/
+*.obj
+*.o
+*.pch
+*.idb
+*.pdb
+*.ilk
+*.tlog
+
+# Visual Studio generated files
+*.vcxproj.user
+*.vcxproj.filters
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.sln.cache
+
+# CMake generated files (if using CMake)
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+compile_commands.json
+
+# Executables and libraries
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+
+# Debugging files
+*.dmp
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Windows files
+Thumbs.db
+Desktop.ini
