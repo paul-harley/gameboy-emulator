@@ -2,6 +2,7 @@
 #include <vector>
 #include <array>
 
+
 struct MemoryRegion{	
 	std::vector<uint8_t> memory;
 
@@ -37,8 +38,9 @@ private:
 	MemoryRegion hram			{ 0xFF80, 0xFFFE };
 	MemoryRegion ie_register	{ 0xFFFF, 0xFFFF };
 
-	std::array<MemoryRegion*, 9> all_memory = { &rom_bank0, &rom_bank1, &vram, &external_ram,
+	std::array<MemoryRegion*, 9> main_memory = { &rom_bank0, &rom_bank1, &vram, &external_ram,
 		&wram, &oam, &io_registers, &hram, &ie_register };
+
 
 
 public:								

@@ -1,34 +1,51 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 
 typedef uint8_t byte;
 typedef uint16_t word;
 
+enum Reg8
+{
+	A,
+	F,
+	B,
+	C,
+	D,
+	E,
+	H,
+	L
+};
+
 class Registers {
 
-private:
-	byte A;
-	byte F;
+public:
 
-	byte B;
-	byte C;
-
-	byte D;
-	byte E;
-
-	byte H;
-	byte L;
+	std::array<byte, 8> regs_8b;
 
 	// stack pointer
 	word SP;
 	word PC;
 
+	// get larger combined registers
+	word get_AF();
+	word get_BC();
+	word get_DE();
+	word get_HL();
 
-public:
-	word getAF();
-	word getBC();
-	word getDE();
-	word getHL();
+	// set larger combined registers
+	void set_AF(word val);
+	void set_BC(word val);
+	void set_DE(word val);
+	void set_HL(word val);
+
+
+	// all these in F register
+	// F = znhc0000
+	bool z_flag_set();
+	bool n_flag_set();
+	bool h_flag_set();
+	bool c_flag_set();
 
 };
