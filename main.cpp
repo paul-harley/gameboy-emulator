@@ -27,6 +27,14 @@ int main() {
 	}
 
 
+	std::cout << "*******************" << std::endl;
+	word test_address = 0x10F0;
+	mybus.dump_memory(test_address, 10);
+	std::cout << "*******************" << std::endl;
+	mybus.write_memory(test_address, 0xF9);
+	std::cout<<static_cast<int>(mybus.read_memory(test_address)) << std::endl;
+	std::cout << "*******************" << std::endl;
+	mybus.dump_memory(test_address, 10);
 
 	return 0;
 }

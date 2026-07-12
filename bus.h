@@ -41,12 +41,15 @@ private:
 	std::array<MemoryRegion*, 9> main_memory = { &rom_bank0, &rom_bank1, &vram, &external_ram,
 		&wram, &oam, &io_registers, &hram, &ie_register };
 
-
+	MemoryRegion* get_correct_memory(uint16_t address);
 
 public:								
 	Bus();
 
+
+
 	uint8_t read_memory(uint16_t address);
-	uint8_t write_memory(uint16_t address);
+	void write_memory(uint16_t address, uint8_t data);
+	void dump_memory(uint16_t start_loc, uint8_t num_bytes);
 
 };

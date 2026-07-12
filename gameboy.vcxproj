@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bus.cpp" />
+    <ClCompile Include="cpu.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="registers.cpp" />
   </ItemGroup>

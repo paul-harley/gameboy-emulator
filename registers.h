@@ -6,6 +6,10 @@
 typedef uint8_t byte;
 typedef uint16_t word;
 
+typedef int8_t sbyte;
+typedef int16_t sword;
+
+
 enum Reg8
 {
 	A,
@@ -17,6 +21,19 @@ enum Reg8
 	H,
 	L
 };
+
+enum Reg16
+{
+	AF,
+	BC,
+	DE,
+	HL,
+	SP,
+	PC
+};
+
+
+
 
 class Registers {
 
@@ -34,11 +51,16 @@ public:
 	word get_DE();
 	word get_HL();
 
+
 	// set larger combined registers
 	void set_AF(word val);
 	void set_BC(word val);
 	void set_DE(word val);
 	void set_HL(word val);
+
+	//more general if unknown which one to use
+	word get_Reg16(Reg16 reg);
+	void set_Reg16(Reg16 save_loc, word val);
 
 
 	// all these in F register
