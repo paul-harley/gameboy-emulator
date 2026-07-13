@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="gameboy.vcxproj" />
+  <Project Path="gameboy.vcxproj" Id="03862829-6827-4143-88e1-507aebedc93c" />
 </Solution>

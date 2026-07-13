@@ -65,9 +65,14 @@ public:
 
 	// all these in F register
 	// F = znhc0000
-	bool z_flag_set();
-	bool n_flag_set();
-	bool h_flag_set();
-	bool c_flag_set();
+	bool z_flag_is_set();
+	bool n_flag_is_set();
+	bool h_flag_is_set();
+	bool c_flag_is_set();
+
+	void set_z_flag(byte new_val);
+	void set_n_flag(byte new_val);
+	void set_h_flag(byte new_val);
+	void set_c_flag(byte new_val);
 
 };

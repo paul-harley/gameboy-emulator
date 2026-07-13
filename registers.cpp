@@ -98,7 +98,7 @@ void Registers::set_HL(word val) {
 }
 
 
-bool Registers::z_flag_set() {
+bool Registers::z_flag_is_set() {
 	
 	word AF = get_AF();
 	byte flags = AF & 0xFF;
@@ -111,7 +111,7 @@ bool Registers::z_flag_set() {
 }
 
 
-bool Registers::n_flag_set() {
+bool Registers::n_flag_is_set() {
 
 	word AF = get_AF();
 	byte flags = AF & 0xFF;
@@ -124,7 +124,7 @@ bool Registers::n_flag_set() {
 }
 
 
-bool Registers::h_flag_set() {
+bool Registers::h_flag_is_set() {
 
 	word AF = get_AF();
 	byte flags = AF & 0xFF;
@@ -137,7 +137,7 @@ bool Registers::h_flag_set() {
 }
 
 
-bool Registers::c_flag_set() {
+bool Registers::c_flag_is_set() {
 
 	word AF = get_AF();
 	byte flags = AF & 0xFF;
@@ -147,4 +147,86 @@ bool Registers::c_flag_set() {
 		return true;
 	}
 	return false;
+}
+
+
+void Registers::set_z_flag(byte new_val) {
+	byte z;
+	if (new_val > 0) {
+		z = 1;
+	}
+	else {
+		z = 0;
+	}
+
+	byte full_data = regs_8b[F];
+	byte current_flags = full_data >> 4;
+
+	byte new_flags = current_flags & 0b0111;
+	new_flags += (8 * z);
+	new_flags = new_flags << 4;
+
+	regs_8b[F] = new_flags;
+}
+
+
+void Registers::set_n_flag(byte new_val) {
+
+	byte n;
+	if (new_val > 0) {
+		n = 1;
+	}
+	else {
+		n = 0;
+	}
+
+	byte full_data = regs_8b[F];
+	byte current_flags = full_data >> 4;
+
+	byte new_flags = current_flags & 0b1011;
+	new_flags += (4 * n);
+	new_flags = new_flags << 4;
+
+	regs_8b[F] = new_flags;
+
+}
+void Registers::set_h_flag(byte new_val) {
+
+	byte h;
+	if (new_val > 0) {
+		h = 1;
+	}
+	else {
+		h = 0;
+	}
+
+	byte full_data = regs_8b[F];
+	byte current_flags = full_data >> 4;
+
+	byte new_flags = current_flags & 0b1011;
+	new_flags += (2 * h);
+	new_flags = new_flags << 4;
+
+	regs_8b[F] = new_flags;
+
+}
+void Registers::set_c_flag(byte new_val) {
+
+	byte c;
+	if (new_val > 0) {
+		c = 1;
+	}
+	else {
+		c = 0;
+	}
+
+	byte full_data = regs_8b[F];
+	byte current_flags = full_data >> 4;
+
+	byte new_flags = current_flags & 0b1011;
+	new_flags += (1 * c);
+	new_flags = new_flags << 4;
+
+	regs_8b[F] = new_flags;
+
 }
