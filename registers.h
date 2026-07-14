@@ -75,4 +75,11 @@ public:
 	void set_h_flag(byte new_val);
 	void set_c_flag(byte new_val);
 
+	void set_flags(byte z, byte n, byte h, byte c);
+
+	byte get_z_flag();
+	byte get_n_flag();
+	byte get_h_flag();
+	byte get_c_flag();
+
 };

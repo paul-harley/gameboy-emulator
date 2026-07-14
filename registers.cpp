@@ -230,3 +230,46 @@ void Registers::set_c_flag(byte new_val) {
 	regs_8b[F] = new_flags;
 
 }
+
+void Registers::set_flags(byte z, byte n, byte h, byte c) {
+	set_z_flag(z);
+	set_n_flag(n);
+	set_h_flag(h);
+	set_c_flag(c);
+}
+
+
+
+byte Registers::get_z_flag() {
+	if (z_flag_is_set()) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+byte Registers::get_n_flag() {
+	if (n_flag_is_set()) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+byte Registers::get_h_flag() {
+	if (h_flag_is_set()) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+
+byte Registers::get_c_flag() {
+	if (c_flag_is_set()) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}

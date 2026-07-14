@@ -1,5 +1,72 @@
 #include "cpu.h"
 
+//HELPERS
+
+bool CPU::carry_add_8(byte val1, byte val2) {
+	byte real_result = val1 + val2;
+	word full_result = val1 + val2;
+
+	if (real_result == full_result) {
+		return false;
+	}
+	return true;
+}
+
+bool CPU::carry_add_8(byte val1, byte val2, byte val3) {
+	byte real_result = val1 + val2 + val3;
+	word full_result = val1 + val2 + val3;
+
+	if (real_result == full_result) {
+		return false;
+	}
+	return true;
+}
+
+
+bool CPU::half_carry_add_8(byte val1, byte val2) {
+	
+	byte lower_nibble_1 = val1 & 0x0F;
+	byte lower_nibble_2 = val2 & 0x0F;
+
+	byte full_result = lower_nibble_1 + lower_nibble_2;
+
+	// if first byte of full_result is not 0 
+	// it has been used and flag would be set
+
+	byte important_bit = full_result & 0b00010000;
+	
+	if (important_bit == 0) {
+		return false;
+	}
+
+	return true;
+
+}
+
+bool CPU::half_carry_add_8(byte val1, byte val2, byte val3) {
+
+	byte lower_nibble_1 = val1 & 0x0F;
+	byte lower_nibble_2 = val2 & 0x0F;
+	byte lower_nibble_3 = val3 & 0x0F;
+
+	byte full_result = lower_nibble_1 + lower_nibble_2 + lower_nibble_3;
+
+	// if first byte of full_result is not 0 
+	// it has been used and flag would be set
+
+	byte important_bit = full_result & 0b00010000;
+
+	if (important_bit == 0) {
+		return false;
+	}
+
+	return true;
+
+}
+
+
+
+// LOAD INSTRUCTIONS
 
 void CPU::ld(Reg8 save_loc, Reg8 reg_to_copy) {
 	regs.regs_8b[save_loc] = regs.regs_8b[reg_to_copy];
@@ -125,6 +192,85 @@ void CPU::ld_to_HL_SP(sbyte offset) {
 void CPU::ld_to_SP_HL() {
 	regs.SP = regs.get_HL();
 }
+
+
+//	ARITHMETIC INSTRUCTIONS
+
+void CPU::adc_a(Reg8 val_loc) {
+	byte c_flag = regs.get_c_flag();
+	byte original_a = regs.regs_8b[A];
+	byte val_to_add = regs.regs_8b[val_loc];
+	bool z, n, h, c;
+
+
+	h = half_carry_add_8(original_a, c_flag, val_to_add);
+	c = carry_add_8(original_a, c_flag,  val_to_add);
+
+	regs.regs_8b[A] = original_a + val_to_add + c_flag;
+
+	z = (regs.regs_8b[A] == 0);
+
+	n = 0;
+	regs.set_flags(z, n, h, c);
+}
+
+void CPU::adc_a_hl(Reg8 val_loc) {
+
+	byte val_to_add = bus.read_memory(regs.get_HL());
+	byte original_a = regs.regs_8b[A];
+	byte c_flag = regs.get_c_flag();
+	bool z, n, h, c;
+
+	h = half_carry_add_8(original_a, val_to_add, c_flag);
+	c = carry_add_8(original_a, val_to_add, c_flag);
+
+	regs.regs_8b[A] = original_a + val_to_add + c_flag;
+
+	z = (regs.regs_8b[A] == 0);
+
+	n = 0;
+	regs.set_flags(z, n, h, c);
+}
+
+void CPU::adc_a(byte val_to_add) {
+
+	byte original_a = regs.regs_8b[A];
+	byte c_flag = regs.get_c_flag();
+
+	bool z, n, h, c;
+
+	h = half_carry_add_8(original_a, val_to_add, c_flag);
+	c = carry_add_8(original_a, val_to_add, c_flag);
+
+	regs.regs_8b[A] = original_a + val_to_add + c_flag;
+
+	z = (regs.regs_8b[A] == 0);
+
+	n = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::add_a(Reg8 val_loc) {
+
+	byte original_a = regs.regs_8b[A];
+	byte val_to_add = regs.regs_8b[val_loc];
+
+	bool z, n, h, c;
+
+	h = half_carry_add_8(original_a, val_to_add);
+	c = carry_add_8(original_a, val_to_add);
+
+	regs.regs_8b[A] = original_a + val_to_add;
+
+	z = (regs.regs_8b[A] == 0);
+
+	n = 0;
+	regs.set_flags(z, n, h, c);
+
+
+}
+
 
 
 

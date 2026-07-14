@@ -18,6 +18,13 @@ private:
 
 	//OPCODES
 
+	//helpers
+	bool carry_add_8(byte val1, byte val2);
+	bool carry_add_8(byte val1, byte val2, byte val3);
+	bool half_carry_add_8(byte val1, byte val2);
+	bool half_carry_add_8(byte val1, byte val2, byte val3);
+
+
 	// load instructions
 	void ld(Reg8 save_loc, Reg8 reg_to_copy);
 	void ld(Reg8 save_loc, byte val);
@@ -39,5 +46,12 @@ private:
 	void ld_to_mem_SP(word save_loc);
 	void ld_to_HL_SP(sbyte offset);
 	void ld_to_SP_HL();
+
+	//8 bit arithmetic
+
+	void adc_a(Reg8 val_loc); // c = carry flag added 
+	void adc_a_hl(Reg8 val_loc);
+	void adc_a(byte val_to_add);
+	void add_a(Reg8 val_loc);
 
 };
