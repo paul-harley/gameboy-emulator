@@ -19,7 +19,8 @@ enum Reg8
 	D,
 	E,
 	H,
-	L
+	L,
+	HL_LOC
 };
 
 enum Reg16

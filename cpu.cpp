@@ -64,6 +64,56 @@ bool CPU::half_carry_add_8(byte val1, byte val2, byte val3) {
 
 }
 
+Reg8 CPU::decode_reg8_bits(byte reg_3_bit_code) {
+	switch (reg_3_bit_code) {
+	case 0:
+		return B;
+	case 1:
+		return C;
+	case 2:
+		return D;
+	case 3:
+		return E;
+	case 4:
+		return H;
+	case 5:
+		return L;
+	case 6:
+		return HL_LOC;
+	default:
+		return;
+	}
+}
+
+Reg16 CPU::decode_reg16_bits(byte reg_2_bit_code) {
+	switch (reg_2_bit_code) {
+	case 0:
+		return BC;
+	case 1:
+		return DE;
+	case 2:
+		return HL;
+	case 3:
+		return SP;
+	}
+}
+
+Reg16 CPU::decode_reg16_stk_bits(byte reg_2_bit_code) {
+	switch (reg_2_bit_code) {
+	case 0:
+		return BC;
+	case 1:
+		return DE;
+	case 2:
+		return HL;
+	case 3:
+		return AF;
+	}
+}
+
+//TODO: think about how to do the r16_mem decoding
+// it has hl+ and hl- i havent figured out yet
+
 
 
 // LOAD INSTRUCTIONS
@@ -196,22 +246,45 @@ void CPU::ld_to_SP_HL() {
 
 //	ARITHMETIC INSTRUCTIONS
 
-void CPU::adc_a(Reg8 val_loc) {
-	byte c_flag = regs.get_c_flag();
-	byte original_a = regs.regs_8b[A];
-	byte val_to_add = regs.regs_8b[val_loc];
+void CPU::add_a_values_set_flags(byte val1, byte val2) {
+
 	bool z, n, h, c;
 
+	h = half_carry_add_8(val1, val2);
+	c = carry_add_8(val1, val2);
 
-	h = half_carry_add_8(original_a, c_flag, val_to_add);
-	c = carry_add_8(original_a, c_flag,  val_to_add);
-
-	regs.regs_8b[A] = original_a + val_to_add + c_flag;
+	regs.regs_8b[A] = val1 + val2;
 
 	z = (regs.regs_8b[A] == 0);
 
 	n = 0;
 	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::add_a_values_set_flags(byte val1, byte val2, byte val3) {
+
+	bool z, n, h, c;
+
+	h = half_carry_add_8(val1, val2, val3);
+	c = carry_add_8(val1, val2, val3);
+
+	regs.regs_8b[A] = val1 + val2 + val3;
+
+	z = (regs.regs_8b[A] == 0);
+
+	n = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::adc_a(Reg8 val_loc) {
+	byte c_flag = regs.get_c_flag();
+	byte original_a = regs.regs_8b[A];
+	byte val_to_add = regs.regs_8b[val_loc];
+
+	add_a_values_set_flags(c_flag, original_a, val_to_add);
+
 }
 
 void CPU::adc_a_hl(Reg8 val_loc) {
@@ -219,17 +292,9 @@ void CPU::adc_a_hl(Reg8 val_loc) {
 	byte val_to_add = bus.read_memory(regs.get_HL());
 	byte original_a = regs.regs_8b[A];
 	byte c_flag = regs.get_c_flag();
-	bool z, n, h, c;
 
-	h = half_carry_add_8(original_a, val_to_add, c_flag);
-	c = carry_add_8(original_a, val_to_add, c_flag);
+	add_a_values_set_flags(c_flag, original_a, val_to_add);
 
-	regs.regs_8b[A] = original_a + val_to_add + c_flag;
-
-	z = (regs.regs_8b[A] == 0);
-
-	n = 0;
-	regs.set_flags(z, n, h, c);
 }
 
 void CPU::adc_a(byte val_to_add) {
@@ -237,17 +302,7 @@ void CPU::adc_a(byte val_to_add) {
 	byte original_a = regs.regs_8b[A];
 	byte c_flag = regs.get_c_flag();
 
-	bool z, n, h, c;
-
-	h = half_carry_add_8(original_a, val_to_add, c_flag);
-	c = carry_add_8(original_a, val_to_add, c_flag);
-
-	regs.regs_8b[A] = original_a + val_to_add + c_flag;
-
-	z = (regs.regs_8b[A] == 0);
-
-	n = 0;
-	regs.set_flags(z, n, h, c);
+	add_a_values_set_flags(c_flag, original_a, val_to_add);
 
 }
 
@@ -256,20 +311,20 @@ void CPU::add_a(Reg8 val_loc) {
 	byte original_a = regs.regs_8b[A];
 	byte val_to_add = regs.regs_8b[val_loc];
 
-	bool z, n, h, c;
-
-	h = half_carry_add_8(original_a, val_to_add);
-	c = carry_add_8(original_a, val_to_add);
-
-	regs.regs_8b[A] = original_a + val_to_add;
-
-	z = (regs.regs_8b[A] == 0);
-
-	n = 0;
-	regs.set_flags(z, n, h, c);
-
+	add_a_values_set_flags(original_a, val_to_add);
 
 }
+
+void CPU::add_a_HL() {
+
+	byte original_a = regs.regs_8b[A];
+	byte val_to_add = bus.read_memory(regs.get_HL());
+
+	add_a_values_set_flags(original_a, val_to_add);
+
+}
+
+
 
 
 

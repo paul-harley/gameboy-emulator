@@ -24,6 +24,12 @@ private:
 	bool half_carry_add_8(byte val1, byte val2);
 	bool half_carry_add_8(byte val1, byte val2, byte val3);
 
+	Reg8 decode_reg8_bits(byte reg_3_bit_code);
+	Reg16 decode_reg16_bits(byte reg_2_bit_code);
+	Reg16 decode_reg16_stk_bits(byte reg_2_bit_code);
+
+	//TODO: think about how to do the r16_mem decoding
+	// it has hl+ and hl- i havent figured out yet
 
 	// load instructions
 	void ld(Reg8 save_loc, Reg8 reg_to_copy);
@@ -49,9 +55,14 @@ private:
 
 	//8 bit arithmetic
 
+	//general ones called from all add instructions
+	void add_a_values_set_flags(byte val1, byte val2);
+	void add_a_values_set_flags(byte val1, byte val2, byte val3);
+
 	void adc_a(Reg8 val_loc); // c = carry flag added 
 	void adc_a_hl(Reg8 val_loc);
 	void adc_a(byte val_to_add);
 	void add_a(Reg8 val_loc);
+	void add_a_HL();
 
 };
