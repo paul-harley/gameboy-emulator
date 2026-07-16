@@ -10,7 +10,7 @@ public:
 	Registers regs;
 
 	void fetch();
-	void decode();
+	void decode(byte instruction);
 
 
 
@@ -21,8 +21,11 @@ private:
 	//helpers
 	bool carry_add_8(byte val1, byte val2);
 	bool carry_add_8(byte val1, byte val2, byte val3);
+	bool carry_add_16(word val1, word val2);
 	bool half_carry_add_8(byte val1, byte val2);
 	bool half_carry_add_8(byte val1, byte val2, byte val3);
+	bool half_carry_add_16(word val1, word val2);
+
 
 	Reg8 decode_reg8_bits(byte reg_3_bit_code);
 	Reg16 decode_reg16_bits(byte reg_2_bit_code);
@@ -31,7 +34,8 @@ private:
 	//TODO: think about how to do the r16_mem decoding
 	// it has hl+ and hl- i havent figured out yet
 
-	// load instructions
+	// LOAD INSTRUCTIONS
+
 	void ld(Reg8 save_loc, Reg8 reg_to_copy);
 	void ld(Reg8 save_loc, byte val);
 	void ld(Reg16 save_loc, word val);
@@ -53,7 +57,7 @@ private:
 	void ld_to_HL_SP(sbyte offset);
 	void ld_to_SP_HL();
 
-	//8 bit arithmetic
+	//8 BIT ARITHMETIC
 
 	//general ones called from all add instructions
 	void add_a_values_set_flags(byte val1, byte val2);
@@ -64,5 +68,20 @@ private:
 	void adc_a(byte val_to_add);
 	void add_a(Reg8 val_loc);
 	void add_a_HL();
+	void add_HL(Reg16 val_loc);
+	void add_HL_SP();
+	void add_SP(sbyte val_to_add);
+
+	void dec(Reg8 val_loc);
+	void inc(Reg8 val_loc);
+
+	// 16 BIT ARITHMETIC
+	void add_HL(Reg16 val_loc);
+	void dec(Reg16 val_loc);
+	void inc(Reg16 val_loc);
+
+
+	// BITWISE LOGIC INSTRUCTIONS
+	void and_a(Reg8 reg_id);
 
 };

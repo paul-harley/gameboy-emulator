@@ -1,5 +1,33 @@
 #include "cpu.h"
 
+
+void CPU::decode(byte instruction) {
+
+	// the blocks are based on https://gbdev.io/pandocs/CPU_Instruction_Set.html
+	byte block_decider = (instruction & 0b11000000) >> 6;
+
+
+	switch (block_decider) {
+	case 0:
+
+		break;
+
+	case 1:
+
+		break;
+	
+	case 2:
+
+		break;
+
+	case 3:
+
+		break;
+	}
+
+}
+
+
 //HELPERS
 
 bool CPU::carry_add_8(byte val1, byte val2) {
@@ -22,6 +50,15 @@ bool CPU::carry_add_8(byte val1, byte val2, byte val3) {
 	return true;
 }
 
+bool CPU::carry_add_16(word val1, word val2) {
+	word real_result = val1 + val2;
+	uint32_t full_result = val1 + val2;
+
+	if (real_result == full_result) {
+		return false;
+	}
+	return true;
+}
 
 bool CPU::half_carry_add_8(byte val1, byte val2) {
 	
@@ -61,6 +98,25 @@ bool CPU::half_carry_add_8(byte val1, byte val2, byte val3) {
 	}
 
 	return true;
+}
+
+bool CPU::half_carry_add_16(word val1, word val2) {
+
+	byte lower_nibble_1 = val1 & 0x0F;
+	byte lower_nibble_2 = val2 & 0x0F;
+
+	byte full_result = lower_nibble_1 + lower_nibble_2;
+
+	// if first byte of full_result is not 0 
+	// it has been used and flag would be set
+
+	byte important_bit = full_result & 0b00010000;
+
+	if (important_bit == 0) {
+		return false;
+	}
+
+	return true;
 
 }
 
@@ -81,7 +137,7 @@ Reg8 CPU::decode_reg8_bits(byte reg_3_bit_code) {
 	case 6:
 		return HL_LOC;
 	default:
-		return;
+		return NONE;
 	}
 }
 
@@ -326,6 +382,126 @@ void CPU::add_a_HL() {
 
 
 
+void CPU::add_HL_SP() {
+	word val_to_add = regs.SP;
+	word orginal_hl = regs.get_HL();
+
+
+	word real_result = orginal_hl + val_to_add;
+	uint32_t full_result = orginal_hl + val_to_add;
+
+	bool c = (real_result != full_result);
+
+	//checking overfllow on bit 11 so need first 3 nibbles
+	word lower_section_1 = orginal_hl & 0x0FFF;
+	word lower_section_2 = val_to_add & 0x0FFF;
+
+	full_result = lower_section_1 + lower_section_2;
+
+	// if first byte of full_result is not 0 
+	// it has been used and flag would be set
+
+	0x1000;
+
+	word important_bit = full_result & 0x1000;
+
+	bool h = (important_bit != 0);
+
+	regs.set_HL(orginal_hl + val_to_add);
+	regs.set_n_flag(0);
+	regs.set_c_flag(c);
+	regs.set_h_flag(h);
+}
+
+void CPU::add_SP(sbyte val_to_add) {
+	word original_sp = regs.SP;
+
+	bool z, n, h, c;
+
+	h = half_carry_add_16(original_sp, val_to_add);
+	c = carry_add_16(original_sp, val_to_add);
+
+	regs.SP = original_sp + val_to_add;
+
+	z = 0;
+
+	n = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::dec(Reg8 val_loc) {
+	regs.regs_8b[val_loc]--;
+}
+
+void CPU::inc(Reg8 val_loc) {
+	regs.regs_8b[val_loc]++ ;
+}
+
+
+
+// 16 BIT ARITHMETIC
+
+void CPU::add_HL(Reg16 val_loc) {
+	word val_to_add = regs.get_Reg16(val_loc);
+	word orginal_hl = regs.get_HL();
+
+
+	word real_result = orginal_hl + val_to_add;
+	uint32_t full_result = orginal_hl + val_to_add;
+
+	bool c = (real_result != full_result);
+
+	//checking overfllow on bit 11 so need first 3 nibbles
+	word lower_section_1 = orginal_hl & 0x0FFF;
+	word lower_section_2 = val_to_add & 0x0FFF;
+
+	full_result = lower_section_1 + lower_section_2;
+
+	// if first byte of full_result is not 0 
+	// it has been used and flag would be set
+
+
+	word important_bit = full_result & 0x1000;
+
+	bool h = (important_bit != 0);
+
+	regs.set_HL(orginal_hl + val_to_add);
+
+	regs.set_n_flag(0);
+	regs.set_c_flag(c);
+	regs.set_h_flag(h);
+}
+
+
+void CPU::dec(Reg16 val_loc) {
+	regs.set_Reg16(val_loc, regs.get_Reg16(val_loc) - 1);
+}
+
+void CPU::inc(Reg16 val_loc) {
+	regs.set_Reg16(val_loc, regs.get_Reg16(val_loc) + 1);
+}
+
+
+//	BITWISE OPERATIONS
+
+
+void CPU::and_a(Reg8 reg_id) {
+
+	byte val_to_compare = regs.regs_8b[reg_id];
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a & val_to_compare;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] != 0);
+	n = 0;
+	h = 1;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
 
 
 
