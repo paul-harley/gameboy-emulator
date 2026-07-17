@@ -3,6 +3,14 @@
 #include "bus.h"
 #include "registers.h"
 
+enum Cond {
+	nz,
+	z,
+	nc,
+	c
+};
+
+
 class CPU {
 
 public:
@@ -68,7 +76,6 @@ private:
 	void adc_a(byte val_to_add);
 	void add_a(Reg8 val_loc);
 	void add_a_HL();
-	void add_HL(Reg16 val_loc);
 	void add_HL_SP();
 	void add_SP(sbyte val_to_add);
 
@@ -83,5 +90,27 @@ private:
 
 	// BITWISE LOGIC INSTRUCTIONS
 	void and_a(Reg8 reg_id);
+	void cpl();
+
+
+	// BITSHIFT INSTRUCTIONS
+	void rlca();
+	void rrca();
+	void rla();
+	void rra();
+
+
+	// JUMPS AND SUBROUTINE INSTRUCTIONS
+	void jr(sbyte offset);
+	void jr_cond(Cond condition, sbyte offset);
+
+
+	// CARRY FLAG INSTRUCTIONS
+	void ccf();
+	void scf();
+
+
+	// MISC INSTRUCTIONS
+	void daa();
 
 };

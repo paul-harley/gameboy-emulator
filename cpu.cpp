@@ -505,3 +505,186 @@ void CPU::and_a(Reg8 reg_id) {
 
 
 
+void CPU::cpl() {
+
+	byte old_a = regs.regs_8b[A];
+	byte new_result = 0;
+
+	for (byte i = 0; i < 8; i++) {
+
+		byte current_bit = old_a & 0x1;
+
+		if (current_bit == 0) {
+			new_result += 1 << i;
+		}
+
+		old_a = old_a >> 1;
+	}
+
+}
+
+
+
+
+// BITSHIFT INSTRUCTIONS
+
+void CPU::rlca() {
+	
+	byte old_a = regs.regs_8b[A];
+	byte left_bit = old_a & 0x80;
+	
+	bool c = (left_bit > 0);
+
+	regs.regs_8b[A] = (old_a << 1) + c;
+
+	regs.set_flags(0,0,0,c);
+}
+
+void CPU::rrca() {
+
+	byte old_a = regs.regs_8b[A];
+	byte right_bit = old_a & 0x01;
+
+	bool c = (right_bit > 0);
+
+	regs.regs_8b[A] = (old_a >> 1) + (c * 0x80);
+
+	regs.set_flags(0, 0, 0, c);
+}
+
+void CPU::rla() {
+
+	byte old_a = regs.regs_8b[A];
+	bool old_c = regs.get_c_flag();
+	byte left_bit = old_a & 0x80;
+
+
+	bool new_c = (left_bit > 0);
+
+	regs.regs_8b[A] = (old_a << 1) + old_c;
+
+	regs.set_flags(0, 0, 0, new_c);
+}
+
+void CPU::rra() {
+
+	byte old_a = regs.regs_8b[A];
+	bool old_c = regs.get_c_flag();
+	byte right_bit = old_a & 0x01;
+
+	bool new_c = (right_bit > 0);
+
+	regs.regs_8b[A] = (old_a >> 1) + (old_c * 0x80);
+
+	regs.set_flags(0, 0, 0, new_c);
+
+}
+
+// JUMPS AND SUBROUTINES INSTRUCTIONS
+
+void CPU::jr(sbyte offset) {
+	regs.PC += offset;
+}
+
+void CPU::jr_cond(Cond condition, sbyte offset) {
+	
+	bool condition_met = false;
+
+	switch (condition) {
+	case nz:
+		if (regs.get_z_flag() == 0) {
+			condition_met = true;
+		}
+		break;
+	case z:
+		if (regs.get_z_flag() == 1) {
+			condition_met = true;
+		}
+		break;
+	case nc:
+		if (regs.get_c_flag() == 0) {
+			condition_met = true;
+		}
+		break;
+
+	case c:
+		if (regs.get_c_flag() == 1) {
+			condition_met = true;
+		}
+		break;
+	}
+	
+	if (condition_met) {
+		regs.PC += offset;
+	}
+
+}
+
+// CARRY FLAG INSTRUCTIONS
+
+void CPU::ccf() {
+
+	regs.set_n_flag(0);
+	regs.set_h_flag(0);
+
+	if (regs.get_c_flag() > 0) {
+		regs.set_c_flag(0);
+	}
+	else {
+		regs.set_c_flag(1);
+	}
+
+
+}
+
+
+void CPU::scf() {
+
+	regs.set_n_flag(0);
+	regs.set_h_flag(0);
+	regs.set_c_flag(1);
+
+}
+
+
+
+
+// MISC INSTRUCTIONS
+void CPU::daa() {
+
+	byte adjustment = 0;
+	bool n = regs.get_n_flag();
+	bool h = regs.get_h_flag();
+	bool c = regs.get_c_flag();
+
+	if (n) {
+		if (h) {
+			adjustment += 0x6;
+		}
+		if (c) {
+			adjustment += 0x60;
+		}
+
+		regs.regs_8b[A] -= adjustment;
+	}
+	else {
+		if (h || (regs.regs_8b[A] & 0xF) > 0x9) {
+			adjustment += 0x6;
+		}
+		if (c || regs.regs_8b[A] > 0x99 ){
+			adjustment += 60;
+			regs.set_c_flag(1);
+		}
+
+		regs.regs_8b[A] += adjustment;
+
+
+	}
+
+	bool z = (regs.regs_8b[A] != 0);
+	regs.set_z_flag(z);
+	regs.set_h_flag(0);
+}
+
+
+
