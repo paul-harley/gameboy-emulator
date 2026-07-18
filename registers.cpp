@@ -26,27 +26,25 @@ word Registers::get_Reg16(Reg16 reg) {
 
 	case Reg16::AF:
 		return get_AF();
-		break;
 
 	case Reg16::BC:
 		return get_BC();
-		break;
 
 	case Reg16::DE:
 		return get_DE();
-		break;
 
 	case Reg16::HL:
 		return get_HL();
-		break;
+	case Reg16::HLI:
+		return get_HL();
+	case Reg16::HLD:
+		return get_HL();
 
 	case Reg16::SP:
 		return SP;
-		break;
 
 	case Reg16::PC:
 		return PC;
-		break;
 	}
 }
 

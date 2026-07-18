@@ -1,6 +1,16 @@
 #include "cpu.h"
 
 
+byte CPU::fetch() {
+
+	byte instruction = bus.read_memory(regs.PC);
+	regs.PC ++;
+
+	return instruction;
+}
+
+
+
 void CPU::decode(byte instruction) {
 
 	// the blocks are based on https://gbdev.io/pandocs/CPU_Instruction_Set.html
@@ -9,7 +19,7 @@ void CPU::decode(byte instruction) {
 
 	switch (block_decider) {
 	case 0:
-
+		decode_block_0(instruction);
 		break;
 
 	case 1:
@@ -24,6 +34,162 @@ void CPU::decode(byte instruction) {
 
 		break;
 	}
+
+}
+
+void CPU::decode_block_0(byte instruction) {
+
+	// TODO: add nop and stop
+
+	byte last_4_bits = instruction & 0xF;
+
+	byte decider_bits = (instruction & 0x30) >> 4;
+	switch (last_4_bits) {
+
+	case 0x1:{
+		Reg16 dst_reg = decode_reg16_bits(decider_bits);
+		word val_to_ld = fetch_16();
+		//ld r16, imm16
+		ld(dst_reg, val_to_ld);
+		return;
+	}
+
+	case 0x2: {
+		//ld [r16mem], a
+		Reg16 save_address_loc = decode_reg16_mem_bits(decider_bits);
+		ld_to_mem_A(save_address_loc);
+		return;
+	}
+
+	case 0xA: {
+		//ld a, [r16mem]
+		Reg16 data_address_loc = decode_reg16_mem_bits(decider_bits);
+		ld_to_A_mem(data_address_loc);
+		return;
+	}
+
+	case 0x8: {
+		//ld[imm16], sp
+		word address = fetch_16();
+		ld_to_mem_SP(address);
+		return;
+	}
+
+
+	case 0x3: {
+		//inc r16
+		Reg16 reg = decode_reg16_bits(decider_bits);
+		inc(reg);
+		return;
+	}
+	case 0xB: {
+		//dec r16
+		Reg16 reg = decode_reg16_bits(decider_bits);
+		dec(reg);
+		return;
+	}
+
+	case 0x9: {
+		//add hl, r16
+		Reg16 reg = decode_reg16_bits(decider_bits);
+		add_HL(reg);
+		return;
+	}
+
+	}
+
+	byte last_3_bits = instruction & 0x7;
+
+	decider_bits = (instruction & 0x38) >> 3;
+
+	switch (last_3_bits) {
+	case 0x4: {
+		//inc r8
+		Reg8 reg = decode_reg8_bits(decider_bits);
+		inc(reg);
+		return;
+	}
+
+	case 0x5: {
+		//dec r8
+		Reg8 reg = decode_reg8_bits(decider_bits);
+		dec(reg);
+		return;
+	}
+
+	case 0x6: {
+		//ld r8, imm8
+		Reg8 reg = decode_reg8_bits(decider_bits);
+		byte val_to_add = fetch();
+		ld(reg, val_to_add);
+		return;
+	}
+
+	case 0x0: {
+
+		if (instruction & 0x20) {
+			byte cond_bits = (instruction & 0x18) >> 3;
+			Cond cond = decode_cond_bits(cond_bits);
+			sbyte offset = fetch();
+			//jr cond, imm8
+			jr_cond(cond, offset);
+			return;
+		}
+		//other ending in 000 dealt with below as
+		//they have full set 8 bits all the time
+		break;
+	}
+	}
+
+	switch (instruction) {
+	case 0x7:
+		//rlca
+		rlca();
+		return;
+	case 0xF:
+		//rrca
+		rrca();
+		return;
+	case 0x17:
+		//rla
+		rla();
+		return;
+	case 0x1F:
+		//rra
+		rra();
+		return;
+	case 0x27:
+		//daa
+		daa();
+		return;
+	case 0x2F:
+		//cpl
+		cpl();
+		return;
+	case 0x37:
+		//scf
+		scf();
+		return;
+	case 0x3F:
+		//ccf
+		ccf();
+		return;
+
+
+	
+	case 0x18: {
+		//jr imm8
+		sbyte offset = fetch();
+		jr(offset);
+		return;
+	}
+
+	case 0x10:
+		//stop
+		break;
+
+	}
+
 
 }
 
@@ -120,6 +286,16 @@ bool CPU::half_carry_add_16(word val1, word val2) {
 
 }
 
+word CPU::fetch_16() {
+
+	byte lower = fetch();
+	byte higher = fetch();
+
+	return (higher << 8) | lower;
+}
+
+
+
 Reg8 CPU::decode_reg8_bits(byte reg_3_bit_code) {
 	switch (reg_3_bit_code) {
 	case 0:
@@ -167,8 +343,37 @@ Reg16 CPU::decode_reg16_stk_bits(byte reg_2_bit_code) {
 	}
 }
 
+Reg16 CPU::decode_reg16_mem_bits(byte reg_2_bit_code) {
+	
+	switch (reg_2_bit_code) {
+	case 0:
+		return BC;
+	case 1:
+		return DE;
+	case 2:
+		return HLI;
+	case 3:
+		return HLD;
+	}
+
+}
+
 //TODO: think about how to do the r16_mem decoding
 // it has hl+ and hl- i havent figured out yet
+
+
+Cond CPU::decode_cond_bits(byte cond_2_bit_code) {
+	switch (cond_2_bit_code) {
+	case 0:
+		return nz;
+	case 1:
+		return z;
+	case 2:
+		return nc;
+	case 3:
+		return c;
+	}
+}
 
 
 
@@ -202,10 +407,17 @@ void CPU::ld_to_reg_HL(Reg8 save_loc) {
 	regs.regs_8b[save_loc] = bus.read_memory(data_loc);
 }
 
-void CPU::ld_to_mem_A(Reg16 save_loc) {
+void CPU::ld_to_mem_A(Reg16 save_address_loc) {
 	byte data = regs.regs_8b[A];
-	word save_address = regs.get_Reg16(save_loc);
+	word save_address = regs.get_Reg16(save_address_loc);
 	bus.write_memory(save_address, data);
+
+	if (save_address_loc == HLI) {
+		regs.set_HL(regs.get_HL() + 1);
+	}
+	else if (save_address_loc == HLD) {
+		regs.set_HL(regs.get_HL() - 1);
+	}
 }
 
 void CPU::ld_to_mem_A(word save_loc) {
@@ -223,6 +435,13 @@ void CPU::ld_to_A_mem(Reg16 val_loc) {
 	word data_address = regs.get_Reg16(val_loc);
 	byte data = bus.read_memory(data_address);
 	regs.regs_8b[A] = data;
+
+	if (val_loc == HLI) {
+		regs.set_HL(regs.get_HL() + 1);
+	}
+	else if (val_loc == HLD) {
+		regs.set_HL(regs.get_HL() - 1);
+	}
 }
 
 void CPU::ld_to_A_mem(word val_loc) {

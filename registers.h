@@ -31,7 +31,12 @@ enum Reg16
 	DE,
 	HL,
 	SP,
-	PC
+	PC,
+
+	//used for determining if reg should be 
+	//inc/dec after access
+	HLI,
+	HLD
 };
 
 

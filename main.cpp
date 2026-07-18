@@ -22,31 +22,21 @@ int main() {
 
 	byte F_TEST = 0xAF;
 
-	byte instruction = 0b00000001;
+	byte instruction = 0b00010001;
 	std::cout << std::hex<< static_cast<int>(instruction) << std::endl;
 	
 	instruction = (instruction << 1);
 	std::cout << std::hex<< static_cast<int>(instruction) << std::endl;
 
 
-	byte old_a = 0b00000000;
-	byte new_result = 0;
-
-	print_bin(old_a);
-
-
-	for (byte i = 0; i < 8; i++) {
-		byte current_bit = old_a & 0x1;
-		if (current_bit == 0) {
-			new_result += 1 << i ;
-		}
-		old_a = old_a >> 1;
+	byte new_instruction = 0b00100001;
+	if (new_instruction & 0x20) {
+		
+		std::cout << "WORKS HOW I THOUGHT" << std::endl;
 	}
 
-
-	//std::cout << std::hex << static_cast<int>(old_a) << std::endl;
-	print_bin(new_result);
-
+	byte old_a = 0b00000000;
+	byte new_result = 0;
 
 	return 0;
 }

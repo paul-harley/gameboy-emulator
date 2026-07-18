@@ -17,14 +17,13 @@ public:
 	Bus bus;
 	Registers regs;
 
-	void fetch();
+	byte fetch();
 	void decode(byte instruction);
-
 
 
 private:
 
-	//OPCODES
+	void decode_block_0(byte instruction);
 
 	//helpers
 	bool carry_add_8(byte val1, byte val2);
@@ -34,13 +33,21 @@ private:
 	bool half_carry_add_8(byte val1, byte val2, byte val3);
 	bool half_carry_add_16(word val1, word val2);
 
+	word fetch_16();
+
 
 	Reg8 decode_reg8_bits(byte reg_3_bit_code);
 	Reg16 decode_reg16_bits(byte reg_2_bit_code);
 	Reg16 decode_reg16_stk_bits(byte reg_2_bit_code);
+	Reg16 decode_reg16_mem_bits(byte reg_2_bit_code);
+	Cond decode_cond_bits(byte cond_2_bit_code);
+
 
 	//TODO: think about how to do the r16_mem decoding
 	// it has hl+ and hl- i havent figured out yet
+
+	//OPCODES
+	
 
 	// LOAD INSTRUCTIONS
 
@@ -50,7 +57,7 @@ private:
 	void ld_to_HL_loc(Reg8 val_loc);
 	void ld_to_HL_loc(byte val);
 	void ld_to_reg_HL(Reg8 save_loc);
-	void ld_to_mem_A(Reg16 save_loc);
+	void ld_to_mem_A(Reg16 save_address_loc);
 	void ld_to_mem_A(word save_loc); //covers ldh also 
 	void ld_to_ioC_A();
 	void ld_to_A_mem(Reg16 val_loc);
@@ -79,7 +86,7 @@ private:
 	void add_HL_SP();
 	void add_SP(sbyte val_to_add);
 
-	void dec(Reg8 val_loc);
+	void dec(Reg8 val_loc); //TODO: SPECIAL CASE WITH [HL]
 	void inc(Reg8 val_loc);
 
 	// 16 BIT ARITHMETIC
