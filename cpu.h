@@ -26,12 +26,20 @@ private:
 	void decode_block_0(byte instruction);
 
 	//helpers
+	byte get_Reg8(Reg8 reg);	//these are here because they need to see main memory for [hl]
+	void set_Reg8(Reg8 reg, byte value);
+
 	bool carry_add_8(byte val1, byte val2);
 	bool carry_add_8(byte val1, byte val2, byte val3);
 	bool carry_add_16(word val1, word val2);
 	bool half_carry_add_8(byte val1, byte val2);
 	bool half_carry_add_8(byte val1, byte val2, byte val3);
 	bool half_carry_add_16(word val1, word val2);
+
+	bool carry_sub_8(byte a, byte val1);
+	bool carry_sub_8(byte a, byte val1, byte val2);
+	bool half_carry_sub_8(byte a, byte val1);
+	bool half_carry_sub_8(byte a, byte val1, byte val2);
 
 	word fetch_16();
 
@@ -45,13 +53,15 @@ private:
 
 	//TODO: think about how to do the r16_mem decoding
 	// it has hl+ and hl- i havent figured out yet
+	// all loads with reg8 might need looked at again 
+	// cause of [hl]
 
 	//OPCODES
 	
 
 	// LOAD INSTRUCTIONS
 
-	void ld(Reg8 save_loc, Reg8 reg_to_copy);
+	void ld(Reg8 save_loc, Reg8 reg_to_copy); //Exception: [hl], [hl] gives halt
 	void ld(Reg8 save_loc, byte val);
 	void ld(Reg16 save_loc, word val);
 	void ld_to_HL_loc(Reg8 val_loc);
@@ -77,17 +87,31 @@ private:
 	//general ones called from all add instructions
 	void add_a_values_set_flags(byte val1, byte val2);
 	void add_a_values_set_flags(byte val1, byte val2, byte val3);
+	void sub_a_values_set_flags(byte val1, byte val2);
+	void sub_a_values_set_flags(byte val1, byte val2, byte val3);
 
 	void adc_a(Reg8 val_loc); // c = carry flag added 
-	void adc_a_hl(Reg8 val_loc);
+	void adc_a_hl();
 	void adc_a(byte val_to_add);
 	void add_a(Reg8 val_loc);
-	void add_a_HL();
-	void add_HL_SP();
+	void add_a_hl();
+	void add_a(byte val_to_add);
+	void cp_a(Reg8 val_loc);
+	void cp_a_hl();
+	void cp_a(byte val);
+	void dec(Reg8 val_loc);
+	void inc(Reg8 val_loc);
+	void sbc_a(Reg8 val_loc);
+	void sbc_a_hl();
+	void sbc_a(byte val_to_sub);
+	void sub_a(Reg8 val_loc);
+	void sub_a_hl();
+	void sub_a(byte val_to_sub);
+
+
+	void add_hl_sp();
 	void add_SP(sbyte val_to_add);
 
-	void dec(Reg8 val_loc); //TODO: SPECIAL CASE WITH [HL]
-	void inc(Reg8 val_loc);
 
 	// 16 BIT ARITHMETIC
 	void add_HL(Reg16 val_loc);
@@ -116,6 +140,9 @@ private:
 	void ccf();
 	void scf();
 
+
+	//INTERUPTS
+	void halt();
 
 	// MISC INSTRUCTIONS
 	void daa();

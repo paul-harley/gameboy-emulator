@@ -21,6 +21,7 @@ word Registers::get_HL() {
 	return(regs_8b[H] << 8) | regs_8b[L];
 }
 
+
 word Registers::get_Reg16(Reg16 reg) {
 	switch (reg) {
 
