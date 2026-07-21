@@ -313,14 +313,47 @@ Cond CPU::decode_cond_bits(byte cond_2_bit_code) {
 
 void CPU::and_a(Reg8 reg_id) {
 
-	byte val_to_compare = regs.regs_8b[reg_id];
+	byte val_to_compare = get_Reg8(reg_id);
 	byte original_a = regs.regs_8b[A];
 
 	regs.regs_8b[A] = original_a & val_to_compare;
 
 	bool z, n, h, c;
 
-	z = (regs.regs_8b[A] != 0);
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 1;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::and_a_hl() {
+
+	byte val_to_compare = bus.read_memory(regs.get_HL());
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a & val_to_compare;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 1;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::and_a(byte val) {
+
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a & val;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
 	n = 0;
 	h = 1;
 	c = 0;
@@ -348,6 +381,136 @@ void CPU::cpl() {
 
 }
 
+void CPU::or_a(Reg8 reg_id) {
+
+	byte val_to_compare = get_Reg8(reg_id);
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a | val_to_compare;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 0;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::or_a_hl() {
+
+	byte val_to_compare = bus.read_memory(regs.get_HL());
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a | val_to_compare;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 0;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::or_a(byte val) {
+
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a | val;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 0;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::xor_a(Reg8 reg_id) {
+
+	byte val_to_compare = get_Reg8(reg_id);
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a ^ val_to_compare;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 0;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::xor_a_hl() {
+
+	byte val_to_compare = bus.read_memory(regs.get_HL());
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a ^ val_to_compare;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 0;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+void CPU::xor_a(byte val) {
+
+	byte original_a = regs.regs_8b[A];
+
+	regs.regs_8b[A] = original_a ^ val;
+
+	bool z, n, h, c;
+
+	z = (regs.regs_8b[A] == 0);
+	n = 0;
+	h = 0;
+	c = 0;
+	regs.set_flags(z, n, h, c);
+
+}
+
+
+// BITFLAG INSTRUCTIONS
+void CPU::bit(byte test_bit, byte value) {
+
+	bool z = false;
+	if (value & (1 << test_bit)){
+		z = true;
+	}
+	regs.set_z_flag(z);
+	regs.set_n_flag(0);
+	regs.set_h_flag(1);
+
+}
+
+void CPU::res(byte test_bit, Reg8 val_loc) {
+
+	byte value = get_Reg8(val_loc);
+	value &= ~(1 << test_bit);
+
+	set_Reg8(val_loc, value);
+}
+
+
+void CPU::set(byte test_bit, Reg8 val_loc) {
+
+	byte value = get_Reg8(val_loc);
+	value |= (1 << test_bit);
+
+	set_Reg8(val_loc, value);
+}
 
 
 

@@ -3,6 +3,10 @@
 #include "bus.h"
 #include "registers.h"
 
+//TODO: CLEAN THIS FILE BY MAKING MORE GENERAL FUNCTIONS
+// DONT NEED SEPERATE ONES FOR REG, RAW VAL, HL ETC..
+// ONE FOR EACH, ANY THAT NEED TO SAVE CAN STAY SEPERATE
+
 enum Cond {
 	nz,
 	z,
@@ -121,7 +125,24 @@ private:
 
 	// BITWISE LOGIC INSTRUCTIONS
 	void and_a(Reg8 reg_id);
+	void and_a_hl();
+	void and_a(byte val);
 	void cpl();
+	void or_a(Reg8 reg_id);
+	void or_a_hl();
+	void or_a(byte val);
+	void xor_a(Reg8 reg_id);
+	void xor_a_hl();
+	void xor_a(byte val);
+
+
+	// BITFLAG INSTRUCTIONS
+	void bit(byte test_bit, byte value);
+	void res(byte test_bit, Reg8 val_loc);
+ 	void set(byte test_bit, Reg8 val_loc);
+
+
+
 
 
 	// BITSHIFT INSTRUCTIONS
