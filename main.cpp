@@ -29,14 +29,12 @@ int main() {
 	std::cout << std::hex<< static_cast<int>(instruction) << std::endl;
 
 
-	byte new_instruction = 0b00100001;
-	if (new_instruction & 0x20) {
-		
-		std::cout << "WORKS HOW I THOUGHT" << std::endl;
-	}
+	bool new_c = 1;
+	byte new_val = (new_c << 7);
+	std::cout << "***********" << std::endl;
+	std::cout << std::hex << static_cast<int>(new_val) << std::endl;
 
-	byte old_a = 0b00000000;
-	byte new_result = 0;
+
 
 	return 0;
 }

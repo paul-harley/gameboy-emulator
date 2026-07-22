@@ -142,14 +142,24 @@ private:
  	void set(byte test_bit, Reg8 val_loc);
 
 
-
-
-
 	// BITSHIFT INSTRUCTIONS
-	void rlca();
-	void rrca();
-	void rla();
+	//have to keep a funcs cause they have different flags
+	void rla();	
+	void rl(Reg8 reg_to_rotate);
+	void rlc(Reg8 reg_to_rotate);
+	void rlca(); 
+	void rr(Reg8 reg_to_rotate);
 	void rra();
+	void rrc(Reg8 reg_to_rotate);
+	void rrca();
+
+	void sla(Reg8 reg_to_shift);
+	void sra(Reg8 reg_to_shift);
+	void srl(Reg8 reg_to_shift);
+	void swap(Reg8 reg_to_shift);
+
+
+
 
 
 	// JUMPS AND SUBROUTINE INSTRUCTIONS
