@@ -210,6 +210,9 @@ void CPU::set_Reg8(Reg8 reg, byte value) {
 		bus.write_memory(regs.get_HL(), value);
 		return;
 	}
+	else if (reg == F) {
+		value &= 0xF0; 
+	}
 
 	regs.regs_8b[reg] = value;
 }
@@ -352,6 +355,12 @@ void CPU::jr_cond(Cond condition, sbyte offset) {
 
 }
 
+void CPU::push_af() {
+	word val_to_push = regs.get_AF();
+}
+
+
+
 // CARRY FLAG INSTRUCTIONS
 
 void CPU::ccf() {
@@ -421,6 +430,8 @@ void CPU::daa() {
 	regs.set_z_flag(z);
 	regs.set_h_flag(0);
 }
+
+
 
 
 

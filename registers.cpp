@@ -75,7 +75,7 @@ void Registers::set_Reg16(Reg16 save_loc, word val) {
 
 void Registers::set_AF(word val) {
 	regs_8b[A] = (val & 0xFF00) >> 8;
-	regs_8b[F] = val & 0x00FF;
+	regs_8b[F] = val & 0x00F0; //bottom 4 bits always 0
 }
 
 

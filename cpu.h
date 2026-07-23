@@ -31,7 +31,7 @@ private:
 
 	//helpers
 	byte get_Reg8(Reg8 reg);	//these are here because they need to see main memory for [hl]
-	void set_Reg8(Reg8 reg, byte value);
+	void set_Reg8(Reg8 reg, byte value);	// reg16 versions are in registers.cpp
 
 	bool carry_add_8(byte val1, byte val2);
 	bool carry_add_8(byte val1, byte val2, byte val3);
@@ -113,8 +113,6 @@ private:
 	void sub_a(byte val_to_sub);
 
 
-	void add_hl_sp();
-	void add_SP(sbyte val_to_add);
 
 
 	// 16 BIT ARITHMETIC
@@ -160,8 +158,6 @@ private:
 
 
 
-
-
 	// JUMPS AND SUBROUTINE INSTRUCTIONS
 	void jr(sbyte offset);
 	void jr_cond(Cond condition, sbyte offset);
@@ -170,6 +166,20 @@ private:
 	// CARRY FLAG INSTRUCTIONS
 	void ccf();
 	void scf();
+
+
+	//STACK MANIPULATION
+	void add_hl_sp();
+	void add_SP(sbyte val_to_add);
+	void push_af();
+	void dec_sp();
+	void inc_sp();
+	void ld_sp(word val_to_load);
+	void ld_to_mem_sp(word save_loc);
+	void ld_to_hl_spe8(sbyte val_to_add);
+	void ld_sp_hl();
+	void pop(Reg16 save_loc);
+	void push(Reg16 data_loc);
 
 
 	//INTERUPTS
