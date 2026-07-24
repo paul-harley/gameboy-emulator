@@ -23,11 +23,11 @@ void CPU::decode(byte instruction) {
 		break;
 
 	case 1:
-
+		decode_block_1(instruction);
 		break;
 	
 	case 2:
-
+		decode_block_2(instruction);
 		break;
 
 	case 3:
@@ -132,7 +132,7 @@ void CPU::decode_block_0(byte instruction) {
 			Cond cond = decode_cond_bits(cond_bits);
 			sbyte offset = fetch();
 			//jr cond, imm8
-			jr_cond(cond, offset);
+			jr(offset, cond);
 			return;
 		}
 		//other ending in 000 dealt with below as
@@ -194,6 +194,60 @@ void CPU::decode_block_0(byte instruction) {
 }
 
 
+void CPU::decode_block_1(byte instruction) {
+	switch (instruction) {
+	case 0x76:
+		halt();
+		break;
+	default:
+	{
+		Reg8 dst = decode_reg8_bits(instruction & 0x38);
+		Reg8 src = decode_reg8_bits(instruction & 0x07);
+
+		ld(dst, src);
+		break;
+	}
+	}
+}
+
+void CPU::decode_block_2(byte instruction) {
+
+	byte operation_bits = instruction & 0xF8;
+	Reg8 reg = decode_reg8_bits(instruction & 0x7);
+
+	switch (operation_bits) {
+
+	case 0x80:
+		add_a(reg);
+		break;
+	case 0x81:
+		adc_a(reg);
+		break;
+	case 0x90:
+		sub_a(reg);
+		break;
+	case 0x91:
+		sbc_a(reg);
+		break;
+	case 0xA0:
+		and_a(reg);
+		break;
+	case 0xA1:
+		xor_a(reg);
+		break;
+	case 0xB0:
+		or_a(reg);
+		break;
+	case 0xB1:
+		cp_a(reg);
+		break;
+	}
+
+
+}
+
+
+
 //HELPERS
 
 byte CPU::get_Reg8(Reg8 reg) {
@@ -229,6 +283,35 @@ word CPU::fetch_16() {
 }
 
 
+bool CPU::check_conds(Cond cond) {
+
+	switch (cond) {
+	case nz:
+		if (regs.get_z_flag() == 0) {
+			return true;
+		}
+		break;
+	case z:
+		if (regs.get_z_flag() == 1) {
+			return true;
+		}
+		break;
+	case nc:
+		if (regs.get_c_flag() == 0) {
+			return true;
+		}
+		break;
+
+	case c:
+		if (regs.get_c_flag() == 1) {
+			return  true;
+		}
+		break;
+	}
+
+	return false;
+
+}
 
 Reg8 CPU::decode_reg8_bits(byte reg_3_bit_code) {
 	switch (reg_3_bit_code) {
@@ -313,54 +396,6 @@ Cond CPU::decode_cond_bits(byte cond_2_bit_code) {
 
 
 
-
-
-// JUMPS AND SUBROUTINES INSTRUCTIONS
-
-void CPU::jr(sbyte offset) {
-	regs.PC += offset;
-}
-
-void CPU::jr_cond(Cond condition, sbyte offset) {
-	
-	bool condition_met = false;
-
-	switch (condition) {
-	case nz:
-		if (regs.get_z_flag() == 0) {
-			condition_met = true;
-		}
-		break;
-	case z:
-		if (regs.get_z_flag() == 1) {
-			condition_met = true;
-		}
-		break;
-	case nc:
-		if (regs.get_c_flag() == 0) {
-			condition_met = true;
-		}
-		break;
-
-	case c:
-		if (regs.get_c_flag() == 1) {
-			condition_met = true;
-		}
-		break;
-	}
-	
-	if (condition_met) {
-		regs.PC += offset;
-	}
-
-}
-
-void CPU::push_af() {
-	word val_to_push = regs.get_AF();
-}
-
-
-
 // CARRY FLAG INSTRUCTIONS
 
 void CPU::ccf() {
@@ -388,6 +423,16 @@ void CPU::scf() {
 }
 
 
+
+//INTERUPTS 
+
+void CPU::di() {
+	ime = false;
+}
+
+void CPU::ei() {
+	ime = true;
+}
 
 void CPU::halt() {
 

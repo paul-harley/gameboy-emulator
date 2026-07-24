@@ -103,14 +103,83 @@ void CPU::pop(Reg16 save_loc) {
 
 
 void CPU::push(Reg16 data_loc) {
-
 	word full_val = regs.get_Reg16(data_loc);
-	byte high = ((full_val & 0xFF00) >> 8);
-	byte low = full_val & 0xFF;
+	push(full_val);
+}
+
+
+void CPU::push(word data) {
+
+	byte high = ((data & 0xFF00) >> 8);
+	byte low = data & 0xFF;
 
 	dec_sp();
 	bus.write_memory(regs.SP, high);
 	dec_sp();
 	bus.write_memory(regs.SP, low);
+}
 
+
+
+// JUMPS AND SUBROUTINES INSTRUCTIONS
+
+void CPU::call(word jump_loc) {
+	push(regs.PC);
+	regs.PC = jump_loc;
+}
+
+
+void CPU::call(word jump_loc, Cond cond) {
+
+	if (check_conds(cond)) {
+		push(regs.PC);
+		regs.PC = jump_loc;
+	}
+}
+
+void CPU::jp_hl() {
+	regs.PC = regs.get_HL();
+}
+
+void CPU::jp(word jump_loc) {
+	regs.PC = jump_loc;
+}
+
+void CPU::jp(word jump_loc, Cond cond) {
+	if (check_conds(cond)) {
+		regs.PC = jump_loc;
+	}
+}
+
+
+void CPU::jr(sbyte offset) {
+	regs.PC += offset;
+}
+
+void CPU::jr(sbyte offset, Cond condition) {
+
+	if (check_conds(condition)) {
+		regs.PC += offset;
+	}
+
+}
+
+void CPU::ret() {
+	pop(PC);
+}
+
+
+void CPU::ret(Cond cond) {
+	if (check_conds(cond)) {
+		pop(PC);
+	}
+}
+
+void CPU::ret_i() {
+	ei();
+	ret();
+}
+
+void CPU::rst(word vector) {
+	call(vector);
 }

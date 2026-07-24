@@ -27,7 +27,12 @@ public:
 
 private:
 
+	bool ime = false; //inretupts based on this
+	std::array<byte, 8> vec = { 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38 }; //fast access memory locs
+
 	void decode_block_0(byte instruction);
+	void decode_block_1(byte instruction);
+	void decode_block_2(byte instruction);
 
 	//helpers
 	byte get_Reg8(Reg8 reg);	//these are here because they need to see main memory for [hl]
@@ -47,18 +52,14 @@ private:
 
 	word fetch_16();
 
+	bool check_conds(Cond cond);
+
 
 	Reg8 decode_reg8_bits(byte reg_3_bit_code);
 	Reg16 decode_reg16_bits(byte reg_2_bit_code);
 	Reg16 decode_reg16_stk_bits(byte reg_2_bit_code);
 	Reg16 decode_reg16_mem_bits(byte reg_2_bit_code);
 	Cond decode_cond_bits(byte cond_2_bit_code);
-
-
-	//TODO: think about how to do the r16_mem decoding
-	// it has hl+ and hl- i havent figured out yet
-	// all loads with reg8 might need looked at again 
-	// cause of [hl]
 
 	//OPCODES
 	
@@ -159,8 +160,18 @@ private:
 
 
 	// JUMPS AND SUBROUTINE INSTRUCTIONS
+	void call(word jump_loc);
+	void call(word jump_loc, Cond cond);
+	void jp_hl();
+	void jp(word jump_loc);
+	void jp(word jump_loc, Cond cond);
 	void jr(sbyte offset);
-	void jr_cond(Cond condition, sbyte offset);
+	void jr(sbyte offset, Cond condition);
+	void ret();
+	void ret(Cond cond);
+	void ret_i();
+	void rst(word vector);
+
 
 
 	// CARRY FLAG INSTRUCTIONS
@@ -171,7 +182,6 @@ private:
 	//STACK MANIPULATION
 	void add_hl_sp();
 	void add_SP(sbyte val_to_add);
-	void push_af();
 	void dec_sp();
 	void inc_sp();
 	void ld_sp(word val_to_load);
@@ -180,10 +190,13 @@ private:
 	void ld_sp_hl();
 	void pop(Reg16 save_loc);
 	void push(Reg16 data_loc);
+	void push(word data);
 
 
 	//INTERUPTS
-	void halt();
+	void di();
+	void ei();
+	void halt(); //TODO: sort out halt
 
 	// MISC INSTRUCTIONS
 	void daa();
