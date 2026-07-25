@@ -21,18 +21,28 @@ public:
 	Bus bus;
 	Registers regs;
 
-	byte fetch();
-	void decode(byte instruction);
 
 
 private:
 
 	bool ime = false; //inretupts based on this
-	std::array<byte, 8> vec = { 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38 }; //fast access memory locs
 
+	byte fetch();
+	word fetch_16();
+
+	//DECODING
+
+	void decode(byte instruction);
 	void decode_block_0(byte instruction);
 	void decode_block_1(byte instruction);
 	void decode_block_2(byte instruction);
+	void decode_block_3(byte instruction);
+	void decode_prefixed(byte instruction);
+	Reg8 decode_reg8_bits(byte reg_3_bit_code);
+	Reg16 decode_reg16_bits(byte reg_2_bit_code);
+	Reg16 decode_reg16_stk_bits(byte reg_2_bit_code);
+	Reg16 decode_reg16_mem_bits(byte reg_2_bit_code);
+	Cond decode_cond_bits(byte cond_2_bit_code);
 
 	//helpers
 	byte get_Reg8(Reg8 reg);	//these are here because they need to see main memory for [hl]
@@ -50,16 +60,10 @@ private:
 	bool half_carry_sub_8(byte a, byte val1);
 	bool half_carry_sub_8(byte a, byte val1, byte val2);
 
-	word fetch_16();
 
 	bool check_conds(Cond cond);
 
 
-	Reg8 decode_reg8_bits(byte reg_3_bit_code);
-	Reg16 decode_reg16_bits(byte reg_2_bit_code);
-	Reg16 decode_reg16_stk_bits(byte reg_2_bit_code);
-	Reg16 decode_reg16_mem_bits(byte reg_2_bit_code);
-	Cond decode_cond_bits(byte cond_2_bit_code);
 
 	//OPCODES
 	
@@ -74,18 +78,15 @@ private:
 	void ld_to_reg_HL(Reg8 save_loc);
 	void ld_to_mem_A(Reg16 save_address_loc);
 	void ld_to_mem_A(word save_loc); //covers ldh also 
-	void ld_to_ioC_A();
+	void ldh_c_a();
 	void ld_to_A_mem(Reg16 val_loc);
 	void ld_to_A_mem(word val_loc); //covers ldh also 
-	void ld_to_A_C();
+	void ldh_a_c();
 	void ld_to_HLI_loc_A(); // inc HL after ld, hl above stays the same
 	void ld_to_HLD_loc_A(); // dec HL
 	void ld_to_A_HLI_loc();
 	void ld_to_A_HLD_loc();
-	void ld_sp(word val);
-	void ld_to_mem_SP(word save_loc);
-	void ld_to_HL_SP(sbyte offset);
-	void ld_to_SP_HL();
+
 
 	//8 BIT ARITHMETIC
 
@@ -197,6 +198,7 @@ private:
 	void di();
 	void ei();
 	void halt(); //TODO: sort out halt
+
 
 	// MISC INSTRUCTIONS
 	void daa();

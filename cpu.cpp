@@ -9,6 +9,14 @@ byte CPU::fetch() {
 	return instruction;
 }
 
+word CPU::fetch_16() {
+
+	byte lower = fetch();
+	byte higher = fetch();
+
+	return (higher << 8) | lower;
+}
+
 
 
 void CPU::decode(byte instruction) {
@@ -31,7 +39,7 @@ void CPU::decode(byte instruction) {
 		break;
 
 	case 3:
-
+		decode_block_3(instruction);
 		break;
 	}
 
@@ -71,7 +79,7 @@ void CPU::decode_block_0(byte instruction) {
 	case 0x8: {
 		//ld[imm16], sp
 		word address = fetch_16();
-		ld_to_mem_SP(address);
+		ld_to_mem_sp(address);
 		return;
 	}
 
@@ -193,7 +201,6 @@ void CPU::decode_block_0(byte instruction) {
 
 }
 
-
 void CPU::decode_block_1(byte instruction) {
 	switch (instruction) {
 	case 0x76:
@@ -246,41 +253,199 @@ void CPU::decode_block_2(byte instruction) {
 
 }
 
+void CPU::decode_block_3(byte instruction) {
+
+	switch (instruction) {
+	case 0xC6:
+		add_a(fetch());
+		return;
+	case 0xCE:
+		adc_a(fetch());
+		return;
+	case 0xD6:
+		sub_a(fetch());
+		return;
+	case 0xDE:
+		sbc_a(fetch());
+		return;
+	case 0xE6:
+		and_a(fetch());
+		return;
+	case 0xEE:
+		xor_a(fetch());
+		return;
+	case 0xF6:
+		or_a(fetch());
+		return;
+	case 0xFE:
+		cp_a(fetch());
+		return;
 
 
-//HELPERS
+	case 0xC9:
+		ret();
+		return;
+	case 0xD9:
+		ret_i();
+		return;
+	case 0xC3:
+		jp(fetch_16());
+		return;
+	case 0xE9:
+		jp_hl();
+		return;
+	case 0xCD:
+		call(fetch_16());
+		return;
 
-byte CPU::get_Reg8(Reg8 reg) {
 
-	if (reg == HL_LOC) {
-		return bus.read_memory(regs.get_HL());
-	}
-	return regs.regs_8b[reg];
-}
+	case 0xCB:
+		decode_prefixed(fetch());
+		return;
 
-void CPU::set_Reg8(Reg8 reg, byte value) {
-	if (reg == HL_LOC)
-	{
-		bus.write_memory(regs.get_HL(), value);
+
+	case 0xE2:
+		ldh_c_a();
+		return;
+	case 0xE0:
+		ld_to_mem_A(0xFF|fetch());
+		return;
+	case 0xEA:
+		ld_to_mem_A(fetch_16());
+		return;
+	case 0xF2:
+		ldh_a_c();
+		return;
+	case 0xF0:
+		ld_to_A_mem(0xFF | fetch());
+		return;
+	case 0xFA:
+		ld_to_A_mem(0xFF | fetch_16());
+		return;
+
+
+
+	case 0xE8:
+		add_SP(fetch());
+		return;
+	case 0xF8:
+		ld_to_hl_spe8(fetch());
+		return;
+	case 0xF9:
+		ld_sp_hl();
+		return;
+
+
+	case 0xF3:
+		di();
+		return;
+	case 0xFB:
+		ei();
 		return;
 	}
-	else if (reg == F) {
-		value &= 0xF0; 
+
+	// other ones in this section have some other data within instruction
+
+	byte last_3_bits = instruction & 0x7;
+
+	switch (last_3_bits) {
+	case 0x0: {
+		byte cond_bits = instruction & 0x18 >> 3;
+		ret(decode_cond_bits(cond_bits));
+		return;
 	}
 
-	regs.regs_8b[reg] = value;
+	case 0x2: {
+		byte cond_bits = instruction & 0x18 >> 3;
+		jp(fetch_16(), decode_cond_bits(cond_bits));
+		return;
+	}
+
+	case 0x4: {
+		byte cond_bits = instruction & 0x18 >> 3;
+		call(fetch_16(), decode_cond_bits(cond_bits));
+		return;
+	}
+
+	case 0x7: {
+		byte target_bits = instruction & 0x38 >> 3;
+		rst(target_bits << 3); //multiply by 8
+		return;
+	}
+
+	case 0x1: {
+		byte reg_stack_bits = instruction & 0x30 >> 4;
+		pop(decode_reg16_stk_bits(reg_stack_bits));
+		return;
+	}
+
+	case 0x5: {
+		byte reg_stack_bits = instruction & 0x30 >> 4;
+		push(decode_reg16_stk_bits(reg_stack_bits));
+		return;
+	}
+	}
+
+
 }
 
+void CPU::decode_prefixed(byte instruction) {
+
+	byte decider_bits = instruction & 0xF8;
+	byte reg8_bits = instruction & 0x7;
+
+	switch (decider_bits) {
+	case 0x0:
+		rlc(decode_reg8_bits(reg8_bits));
+		return;
+	case 0x08:
+		rrc(decode_reg8_bits(reg8_bits));
+		return;
+	case 0x10:
+		rl(decode_reg8_bits(reg8_bits));
+		return;
+	case 0x18:
+		rr(decode_reg8_bits(reg8_bits));
+		return;
+	case 0x20:
+		sla(decode_reg8_bits(reg8_bits));
+		return;
+	case 0x28:
+		sra(decode_reg8_bits(reg8_bits));
+		return;
+	case 0x30:
+		swap(decode_reg8_bits(reg8_bits));
+		return;
+	case 0x38:
+		srl(decode_reg8_bits(reg8_bits));
+		return;
+	}
+
+	decider_bits = instruction & 0xC0;
+	byte bit_index = (instruction & 0x38) >> 3;
 
 
+	switch (decider_bits) {
+	case 0x40: {
+		byte val = get_Reg8(decode_reg8_bits(reg8_bits));
+		bit(bit_index, val);
+		return;
+	}
 
-word CPU::fetch_16() {
+	case 0x80: {
+		res(bit_index, decode_reg8_bits(reg8_bits));
+		return;
+	}
 
-	byte lower = fetch();
-	byte higher = fetch();
+	case 0xC0: {
+		set(bit_index, decode_reg8_bits(reg8_bits));
+		return;
+	}
 
-	return (higher << 8) | lower;
+	}
+
 }
+
 
 
 bool CPU::check_conds(Cond cond) {
@@ -475,6 +640,32 @@ void CPU::daa() {
 	regs.set_z_flag(z);
 	regs.set_h_flag(0);
 }
+
+
+//HELPERS 
+
+byte CPU::get_Reg8(Reg8 reg) {
+
+	if (reg == HL_LOC) {
+		return bus.read_memory(regs.get_HL());
+	}
+	return regs.regs_8b[reg];
+}
+
+void CPU::set_Reg8(Reg8 reg, byte value) {
+	if (reg == HL_LOC)
+	{
+		bus.write_memory(regs.get_HL(), value);
+		return;
+	}
+	else if (reg == F) {
+		value &= 0xF0;
+	}
+
+	regs.regs_8b[reg] = value;
+}
+
+
 
 
 

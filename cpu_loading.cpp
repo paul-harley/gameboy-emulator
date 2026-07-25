@@ -51,7 +51,7 @@ void CPU::ld_to_mem_A(word save_loc) {
 	bus.write_memory(save_loc, data);
 }
 
-void CPU::ld_to_ioC_A() {
+void CPU::ldh_c_a() {
 	byte data = regs.regs_8b[A];
 	word save_loc = 0xFF00 + regs.regs_8b[C];
 	bus.write_memory(save_loc, data);
@@ -75,7 +75,7 @@ void CPU::ld_to_A_mem(word val_loc) {
 	regs.regs_8b[A] = data;
 }
 
-void CPU::ld_to_A_C() {
+void CPU::ldh_a_c() {
 	word data_address = 0xFF00 + regs.regs_8b[C];
 	byte data = bus.read_memory(data_address);
 	regs.regs_8b[A] = data;
@@ -107,39 +107,4 @@ void CPU::ld_to_A_HLD_loc() {
 	byte data = bus.read_memory(address);
 	regs.regs_8b[A] = data;
 	regs.set_HL(address - 1);
-}
-
-
-void CPU::ld_sp(word val) {
-	regs.SP = val;
-}
-
-void CPU::ld_to_mem_SP(word save_loc) {
-	byte lower_half = regs.SP & 0xFF;
-	byte upper_half = regs.SP >> 8;
-
-	bus.write_memory(save_loc, lower_half);
-	bus.write_memory(save_loc + 1, upper_half);
-}
-
-
-
-//bit of a whacky one, good chance it breaks laters
-void CPU::ld_to_HL_SP(sbyte offset) {
-	regs.set_HL(regs.SP + offset);
-
-	regs.set_z_flag(0);
-	regs.set_n_flag(0);
-
-
-	byte half_carry = ((regs.SP & 0xF) + (offset & 0xF)) > 0xF;
-	byte carry = ((regs.SP & 0xFF) + offset) > 0xFF;
-
-	regs.set_h_flag(half_carry);
-	regs.set_c_flag(carry);
-
-}
-
-void CPU::ld_to_SP_HL() {
-	regs.SP = regs.get_HL();
 }
