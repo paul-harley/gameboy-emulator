@@ -23,7 +23,6 @@ void CPU::add_hl_sp() {
 	// if first byte of full_result is not 0 
 	// it has been used and flag would be set
 
-	0x1000;
 
 	word important_bit = full_result & 0x1000;
 
@@ -57,7 +56,7 @@ void CPU::dec_sp() {
 }
 
 void CPU::inc_sp() {
-	regs.SP--;
+	regs.SP++;
 }
 
 void CPU::ld_sp(word val_to_load) {
@@ -129,12 +128,14 @@ void CPU::call(word jump_loc) {
 }
 
 
-void CPU::call(word jump_loc, Cond cond) {
+byte CPU::call(word jump_loc, Cond cond) {
 
 	if (check_conds(cond)) {
 		push(regs.PC);
 		regs.PC = jump_loc;
+		return 6;
 	}
+	return 3;
 }
 
 void CPU::jp_hl() {
@@ -145,10 +146,12 @@ void CPU::jp(word jump_loc) {
 	regs.PC = jump_loc;
 }
 
-void CPU::jp(word jump_loc, Cond cond) {
+byte CPU::jp(word jump_loc, Cond cond) {
 	if (check_conds(cond)) {
 		regs.PC = jump_loc;
+		return 4;
 	}
+	return 3;
 }
 
 
@@ -156,11 +159,12 @@ void CPU::jr(sbyte offset) {
 	regs.PC += offset;
 }
 
-void CPU::jr(sbyte offset, Cond condition) {
-
+byte CPU::jr(sbyte offset, Cond condition) {
 	if (check_conds(condition)) {
 		regs.PC += offset;
+		return 3;
 	}
+	return 2;
 
 }
 
@@ -169,10 +173,12 @@ void CPU::ret() {
 }
 
 
-void CPU::ret(Cond cond) {
+byte CPU::ret(Cond cond) {
 	if (check_conds(cond)) {
 		pop(PC);
+		return 5;
 	}
+	return 2;
 }
 
 void CPU::ret_i() {

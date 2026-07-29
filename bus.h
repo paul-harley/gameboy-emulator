@@ -1,6 +1,12 @@
 #pragma once
 #include <vector>
 #include <array>
+#include <iostream>
+#include <string>
+#include <fstream>
+
+typedef uint8_t byte;
+typedef uint16_t word;
 
 
 struct MemoryRegion{	
@@ -43,6 +49,8 @@ private:
 
 	MemoryRegion* get_correct_memory(uint16_t address);
 
+	word fix_echo_address(word address);
+
 public:								
 	Bus();
 
@@ -51,5 +59,6 @@ public:
 	uint8_t read_memory(uint16_t address);
 	void write_memory(uint16_t address, uint8_t data);
 	void dump_memory(uint16_t start_loc, uint8_t num_bytes);
+	void load_rom(const std::string filename);
 
 };

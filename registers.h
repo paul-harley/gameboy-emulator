@@ -46,6 +46,8 @@ class Registers {
 
 public:
 
+	Registers();
+
 	std::array<byte, 8> regs_8b;
 
 	// stack pointer
@@ -88,5 +90,7 @@ public:
 	byte get_n_flag();
 	byte get_h_flag();
 	byte get_c_flag();
+
+	void dump_regs();
 
 };

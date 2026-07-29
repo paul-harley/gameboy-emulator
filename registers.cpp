@@ -1,4 +1,19 @@
 #include "registers.h"
+#include <iostream>
+
+Registers::Registers() {
+
+	regs_8b[A] = 0x01;
+	regs_8b[F] = 0xB0;
+	regs_8b[B] = 0x00;
+	regs_8b[C] = 0x13;
+	regs_8b[D] = 0x00;
+	regs_8b[E] = 0xD8;
+	regs_8b[H] = 0x01;
+	regs_8b[L] = 0x4D;
+	SP = 0xFFFE;
+	PC = 0x0100;
+}
 
 
 word Registers::get_AF() {
@@ -271,4 +286,27 @@ byte Registers::get_c_flag() {
 	else {
 		return 0;
 	}
+}
+
+
+
+void Registers::dump_regs() {
+
+	std::cout <<std::hex<< "A=" << static_cast<int>(regs_8b[A]) << "\t";
+	std::cout <<std::hex<< "B=" << static_cast<int>(regs_8b[B]) << "\t";
+	std::cout <<std::hex<< "C=" << static_cast<int>(regs_8b[C]) << "\t";
+	std::cout <<std::hex<< "D=" << static_cast<int>(regs_8b[D]) << "\t";
+	std::cout <<std::hex<< "E=" << static_cast<int>(regs_8b[E]) << "\t";
+	std::cout <<std::hex<< "F=" << static_cast<int>(regs_8b[F]) << "\t";
+	std::cout <<std::hex<< "H=" << static_cast<int>(regs_8b[H]) << "\t";
+	std::cout <<std::hex<< "L=" << static_cast<int>(regs_8b[L]) << "\n";
+
+	std::cout <<std::hex<< "PC=" << static_cast<int>(PC) << "\t";
+	std::cout <<std::hex<< "SP=" << static_cast<int>(SP) << "\t";
+	std::cout <<std::hex<< "AF=" << static_cast<int>(get_Reg16(AF)) << "\t";
+	std::cout <<std::hex<< "BC=" << static_cast<int>(get_Reg16(BC)) << "\t";
+	std::cout <<std::hex<< "DE=" << static_cast<int>(get_Reg16(DE)) << "\t";
+	std::cout <<std::hex<< "HL=" << static_cast<int>(get_Reg16(HL)) << "\n";
+
+	std::cout << "******************************\n";
 }

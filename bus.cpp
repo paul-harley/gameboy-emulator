@@ -6,6 +6,14 @@ Bus::Bus() {
 
 }
 
+word Bus::fix_echo_address(word address) {
+
+	if (address >= 0xE000 && address <= 0xFDFF) {
+		return address - 0x2000; // mirrors into 0xC000-0xDDFF (wram)
+	}
+	return address;
+}
+
 MemoryRegion* Bus::get_correct_memory(uint16_t address) {
 
 	for (MemoryRegion* region : main_memory) {
@@ -15,10 +23,15 @@ MemoryRegion* Bus::get_correct_memory(uint16_t address) {
 		}
 
 	}
+
+	std::cout << std::hex<< "Address: " << int(address) << " does not exist \n";
+	throw std::runtime_error("Invalid memory address");
 }
 
 
 uint8_t Bus::read_memory(uint16_t address) {
+
+	address = fix_echo_address(address);
 
 	const MemoryRegion* mem_region = get_correct_memory(address);
 
@@ -30,6 +43,15 @@ uint8_t Bus::read_memory(uint16_t address) {
 
 
 void Bus::write_memory(uint16_t address, uint8_t data) {
+
+	address = fix_echo_address(address);
+
+	if (address == 0xFF02) {
+		if (data & 0x80) {
+			std::cout << (char)read_memory(0xFF01);
+			data &= 0x7F; // clear transfer flag immediately - instant "transfer"
+		}
+	}
 
 	MemoryRegion* mem_region = get_correct_memory(address);
 	uint16_t local_address = address - mem_region->start_address;
@@ -53,5 +75,39 @@ void Bus::dump_memory(uint16_t start_loc, uint8_t num_bytes) {
 			<< std::dec << static_cast<int>(mem_region->memory[i]) << "\n";
 
 	}
+}
+
+
+
+
+void Bus::load_rom(const std::string filename) {
+
+	std::ifstream rom(filename, std::ios::binary);
+
+	if (!rom) {
+		std::cout << "ROM not found..." << std::endl;
+		return;
+	}
+
+	byte current_byte;
+	word address = 0;
+
+	rom.seekg(0, std::ios::end);
+	std::cout << "ROM size: " << rom.tellg() << " bytes\n";
+	rom.seekg(0, std::ios::beg);
+
+	while (rom.read(reinterpret_cast<char*> (&current_byte), 1)) {
+		
+		if (address >= 0x8000)
+		{
+			std::cout << "ROM too large\n";
+			break;
+		}
+
+
+		write_memory(address, current_byte);
+		address++;
+	}
+
 }
 

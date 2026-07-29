@@ -2,15 +2,11 @@
 
 
 void CPU::ld(Reg8 save_loc, Reg8 reg_to_copy) {
-	if (save_loc == HL_LOC && reg_to_copy == HL_LOC) {
-		halt();
-	}
-
-	regs.regs_8b[save_loc] = regs.regs_8b[reg_to_copy];
+	set_Reg8(save_loc, get_Reg8(reg_to_copy));
 }
 
 void CPU::ld(Reg8 save_loc, byte val) {
-	regs.regs_8b[save_loc] = val;
+	set_Reg8(save_loc, val);
 }
 
 void CPU::ld(Reg16 save_loc, word val) {
@@ -30,7 +26,7 @@ void CPU::ld_to_HL_loc(byte val) {
 
 void CPU::ld_to_reg_HL(Reg8 save_loc) {
 	word data_loc = regs.get_HL();
-	regs.regs_8b[save_loc] = bus.read_memory(data_loc);
+	set_Reg8(save_loc, bus.read_memory(data_loc));
 }
 
 void CPU::ld_to_mem_A(Reg16 save_address_loc) {

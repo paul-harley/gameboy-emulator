@@ -3,6 +3,7 @@
 #include "bus.h"
 #include "registers.h"
 
+
 //TODO: CLEAN THIS FILE BY MAKING MORE GENERAL FUNCTIONS
 // DONT NEED SEPERATE ONES FOR REG, RAW VAL, HL ETC..
 // ONE FOR EACH, ANY THAT NEED TO SAVE CAN STAY SEPERATE
@@ -21,23 +22,25 @@ public:
 	Bus bus;
 	Registers regs;
 
+	byte fetch();
+	byte decode(byte instruction);
+	void load_rom(const std::string filename);
+
 
 
 private:
 
 	bool ime = false; //inretupts based on this
 
-	byte fetch();
 	word fetch_16();
 
-	//DECODING
+	//DECODING they all return number of cycles
 
-	void decode(byte instruction);
-	void decode_block_0(byte instruction);
-	void decode_block_1(byte instruction);
-	void decode_block_2(byte instruction);
-	void decode_block_3(byte instruction);
-	void decode_prefixed(byte instruction);
+	byte decode_block_0(byte instruction);
+	byte decode_block_1(byte instruction);
+	byte decode_block_2(byte instruction);
+	byte decode_block_3(byte instruction);
+	byte decode_prefixed(byte instruction);
 	Reg8 decode_reg8_bits(byte reg_3_bit_code);
 	Reg16 decode_reg16_bits(byte reg_2_bit_code);
 	Reg16 decode_reg16_stk_bits(byte reg_2_bit_code);
@@ -162,14 +165,14 @@ private:
 
 	// JUMPS AND SUBROUTINE INSTRUCTIONS
 	void call(word jump_loc);
-	void call(word jump_loc, Cond cond);
+	byte call(word jump_loc, Cond cond);
 	void jp_hl();
 	void jp(word jump_loc);
-	void jp(word jump_loc, Cond cond);
+	byte jp(word jump_loc, Cond cond);
 	void jr(sbyte offset);
-	void jr(sbyte offset, Cond condition);
+	byte jr(sbyte offset, Cond condition);
 	void ret();
-	void ret(Cond cond);
+	byte ret(Cond cond);
 	void ret_i();
 	void rst(word vector);
 

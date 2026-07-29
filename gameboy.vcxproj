@@ -144,7 +144,6 @@
     <ClCompile Include="cpu_arithmetic.cpp" />
     <ClCompile Include="cpu_bit_logic.cpp" />
     <ClCompile Include="cpu_control_flow.cpp" />
-    <ClCompile Include="cpu_helpers.cpp" />
     <ClCompile Include="cpu_loading.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="registers.cpp" />
