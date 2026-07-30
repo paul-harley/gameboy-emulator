@@ -1,16 +1,23 @@
 #include "cpu.h"
 
 
-void CPU::ld(Reg8 save_loc, Reg8 reg_to_copy) {
+byte CPU::ld(Reg8 save_loc, Reg8 reg_to_copy) {
 	set_Reg8(save_loc, get_Reg8(reg_to_copy));
+	return 1;
 }
 
-void CPU::ld(Reg8 save_loc, byte val) {
+byte CPU::ld(Reg8 save_loc, byte val) {
 	set_Reg8(save_loc, val);
+
+	if (save_loc == HL_LOC) {
+		return 3;
+	}
+	return 2;
 }
 
-void CPU::ld(Reg16 save_loc, word val) {
+byte CPU::ld(Reg16 save_loc, word val) {
 	regs.set_Reg16(save_loc, val);
+	return 3;
 }
 
 void CPU::ld_to_HL_loc(Reg8 val_loc) {
@@ -29,7 +36,7 @@ void CPU::ld_to_reg_HL(Reg8 save_loc) {
 	set_Reg8(save_loc, bus.read_memory(data_loc));
 }
 
-void CPU::ld_to_mem_A(Reg16 save_address_loc) {
+byte CPU::ld_to_mem_A(Reg16 save_address_loc) {
 	byte data = regs.regs_8b[A];
 	word save_address = regs.get_Reg16(save_address_loc);
 	bus.write_memory(save_address, data);
@@ -40,20 +47,26 @@ void CPU::ld_to_mem_A(Reg16 save_address_loc) {
 	else if (save_address_loc == HLD) {
 		regs.set_HL(regs.get_HL() - 1);
 	}
+
+	return 2;
 }
 
-void CPU::ld_to_mem_A(word save_loc) {
+byte CPU::ld_to_mem_A(word save_loc) {
 	byte data = regs.regs_8b[A];
 	bus.write_memory(save_loc, data);
+	
+	return 3;
 }
 
-void CPU::ldh_c_a() {
+byte CPU::ldh_c_a() {
 	byte data = regs.regs_8b[A];
 	word save_loc = 0xFF00 + regs.regs_8b[C];
 	bus.write_memory(save_loc, data);
+
+	return 2;
 }
 
-void CPU::ld_to_A_mem(Reg16 val_loc) {
+byte CPU::ld_to_A_mem(Reg16 val_loc) {
 	word data_address = regs.get_Reg16(val_loc);
 	byte data = bus.read_memory(data_address);
 	regs.regs_8b[A] = data;
@@ -64,6 +77,8 @@ void CPU::ld_to_A_mem(Reg16 val_loc) {
 	else if (val_loc == HLD) {
 		regs.set_HL(regs.get_HL() - 1);
 	}
+
+	return 2;
 }
 
 void CPU::ld_to_A_mem(word val_loc) {

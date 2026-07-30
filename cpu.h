@@ -73,16 +73,16 @@ private:
 
 	// LOAD INSTRUCTIONS
 
-	void ld(Reg8 save_loc, Reg8 reg_to_copy); //Exception: [hl], [hl] gives halt
-	void ld(Reg8 save_loc, byte val);
-	void ld(Reg16 save_loc, word val);
+	byte ld(Reg8 save_loc, Reg8 reg_to_copy); //Exception: [hl], [hl] gives halt
+	byte ld(Reg8 save_loc, byte val);
+	byte ld(Reg16 save_loc, word val);
 	void ld_to_HL_loc(Reg8 val_loc);
 	void ld_to_HL_loc(byte val);
 	void ld_to_reg_HL(Reg8 save_loc);
-	void ld_to_mem_A(Reg16 save_address_loc);
-	void ld_to_mem_A(word save_loc); //covers ldh also 
-	void ldh_c_a();
-	void ld_to_A_mem(Reg16 val_loc);
+	byte ld_to_mem_A(Reg16 save_address_loc);
+	byte ld_to_mem_A(word save_loc); //covers ldh also 
+	byte ldh_c_a();
+	byte ld_to_A_mem(Reg16 val_loc);
 	void ld_to_A_mem(word val_loc); //covers ldh also 
 	void ldh_a_c();
 	void ld_to_HLI_loc_A(); // inc HL after ld, hl above stays the same
@@ -99,44 +99,36 @@ private:
 	void sub_a_values_set_flags(byte val1, byte val2);
 	void sub_a_values_set_flags(byte val1, byte val2, byte val3);
 
-	void adc_a(Reg8 val_loc); // c = carry flag added 
-	void adc_a_hl();
-	void adc_a(byte val_to_add);
-	void add_a(Reg8 val_loc);
-	void add_a_hl();
-	void add_a(byte val_to_add);
-	void cp_a(Reg8 val_loc);
-	void cp_a_hl();
-	void cp_a(byte val);
-	void dec(Reg8 val_loc);
-	void inc(Reg8 val_loc);
-	void sbc_a(Reg8 val_loc);
-	void sbc_a_hl();
-	void sbc_a(byte val_to_sub);
-	void sub_a(Reg8 val_loc);
-	void sub_a_hl();
-	void sub_a(byte val_to_sub);
+	byte adc_a(Reg8 val_loc); // c = carry flag added 
+	byte adc_a(byte val_to_add);
+	byte add_a(Reg8 val_loc);
+	byte add_a(byte val_to_add);
+	byte cp_a(Reg8 val_loc);
+	byte cp_a(byte val);
+	byte dec(Reg8 val_loc);
+	byte inc(Reg8 val_loc);
+	byte sbc_a(Reg8 val_loc);
+	byte sbc_a(byte val_to_sub);
+	byte sub_a(Reg8 val_loc);
+	byte sub_a(byte val_to_sub);
 
 
 
 
 	// 16 BIT ARITHMETIC
-	void add_HL(Reg16 val_loc);
-	void dec(Reg16 val_loc);
-	void inc(Reg16 val_loc);
+	byte add_HL(Reg16 val_loc);
+	byte dec(Reg16 val_loc);
+	byte inc(Reg16 val_loc);
 
 
 	// BITWISE LOGIC INSTRUCTIONS
-	void and_a(Reg8 reg_id);
-	void and_a_hl();
-	void and_a(byte val);
-	void cpl();
-	void or_a(Reg8 reg_id);
-	void or_a_hl();
-	void or_a(byte val);
-	void xor_a(Reg8 reg_id);
-	void xor_a_hl();
-	void xor_a(byte val);
+	byte and_a(Reg8 reg_id);
+	byte and_a(byte val);
+	byte cpl();
+	byte or_a(Reg8 reg_id);
+	byte or_a(byte val);
+	byte xor_a(Reg8 reg_id);
+	byte xor_a(byte val);
 
 
 	// BITFLAG INSTRUCTIONS
@@ -147,63 +139,63 @@ private:
 
 	// BITSHIFT INSTRUCTIONS
 	//have to keep a funcs cause they have different flags
-	void rla();	
-	void rl(Reg8 reg_to_rotate);
-	void rlc(Reg8 reg_to_rotate);
-	void rlca(); 
-	void rr(Reg8 reg_to_rotate);
-	void rra();
-	void rrc(Reg8 reg_to_rotate);
-	void rrca();
+	byte rla();	
+	byte rl(Reg8 reg_to_rotate);
+	byte rlc(Reg8 reg_to_rotate);
+	byte rlca(); 
+	byte rr(Reg8 reg_to_rotate);
+	byte rra();
+	byte rrc(Reg8 reg_to_rotate);
+	byte rrca();
 
-	void sla(Reg8 reg_to_shift);
-	void sra(Reg8 reg_to_shift);
-	void srl(Reg8 reg_to_shift);
-	void swap(Reg8 reg_to_shift);
+	byte sla(Reg8 reg_to_shift);
+	byte sra(Reg8 reg_to_shift);
+	byte srl(Reg8 reg_to_shift);
+	byte swap(Reg8 reg_to_shift);
 
 
 
 	// JUMPS AND SUBROUTINE INSTRUCTIONS
-	void call(word jump_loc);
+	byte call(word jump_loc);
 	byte call(word jump_loc, Cond cond);
-	void jp_hl();
-	void jp(word jump_loc);
+	byte jp_hl();
+	byte jp(word jump_loc);
 	byte jp(word jump_loc, Cond cond);
-	void jr(sbyte offset);
+	byte jr(sbyte offset);
 	byte jr(sbyte offset, Cond condition);
-	void ret();
+	byte ret();
 	byte ret(Cond cond);
-	void ret_i();
-	void rst(word vector);
+	byte ret_i();
+	byte rst(word vector);
 
 
 
 	// CARRY FLAG INSTRUCTIONS
-	void ccf();
-	void scf();
+	byte ccf();
+	byte scf();
 
 
 	//STACK MANIPULATION
 	void add_hl_sp();
-	void add_SP(sbyte val_to_add);
+	byte add_SP(sbyte val_to_add);
 	void dec_sp();
 	void inc_sp();
 	void ld_sp(word val_to_load);
-	void ld_to_mem_sp(word save_loc);
-	void ld_to_hl_spe8(sbyte val_to_add);
-	void ld_sp_hl();
-	void pop(Reg16 save_loc);
-	void push(Reg16 data_loc);
-	void push(word data);
+	byte ld_to_mem_sp(word save_loc);
+	byte ld_to_hl_spe8(sbyte val_to_add);
+	byte ld_sp_hl();
+	byte pop(Reg16 save_loc);
+	byte push(Reg16 data_loc);
+	byte push(word data);
 
 
 	//INTERUPTS
-	void di();
-	void ei();
+	byte di();
+	byte ei();
 	void halt(); //TODO: sort out halt
 
 
 	// MISC INSTRUCTIONS
-	void daa();
+	byte daa();
 
 };

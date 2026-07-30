@@ -4,7 +4,7 @@
 //	BITWISE OPERATIONS
 
 
-void CPU::and_a(Reg8 reg_id) {
+byte CPU::and_a(Reg8 reg_id) {
 
 	byte val_to_compare = get_Reg8(reg_id);
 	byte original_a = regs.regs_8b[A];
@@ -19,26 +19,15 @@ void CPU::and_a(Reg8 reg_id) {
 	c = 0;
 	regs.set_flags(z, n, h, c);
 
-}
-
-void CPU::and_a_hl() {
-
-	byte val_to_compare = bus.read_memory(regs.get_HL());
-	byte original_a = regs.regs_8b[A];
-
-	regs.regs_8b[A] = original_a & val_to_compare;
-
-	bool z, n, h, c;
-
-	z = (regs.regs_8b[A] == 0);
-	n = 0;
-	h = 1;
-	c = 0;
-	regs.set_flags(z, n, h, c);
+	if (reg_id == HL_LOC) {
+		return 2;
+	}
+	return 1;
 
 }
 
-void CPU::and_a(byte val) {
+
+byte CPU::and_a(byte val) {
 
 	byte original_a = regs.regs_8b[A];
 
@@ -52,11 +41,13 @@ void CPU::and_a(byte val) {
 	c = 0;
 	regs.set_flags(z, n, h, c);
 
+	return 2;
+
 }
 
 
 
-void CPU::cpl() {
+byte CPU::cpl() {
 
 	byte old_a = regs.regs_8b[A];
 	byte new_result = 0;
@@ -72,9 +63,11 @@ void CPU::cpl() {
 		old_a = old_a >> 1;
 	}
 
+	return 1;
+
 }
 
-void CPU::or_a(Reg8 reg_id) {
+byte CPU::or_a(Reg8 reg_id) {
 
 	byte val_to_compare = get_Reg8(reg_id);
 	byte original_a = regs.regs_8b[A];
@@ -89,26 +82,15 @@ void CPU::or_a(Reg8 reg_id) {
 	c = 0;
 	regs.set_flags(z, n, h, c);
 
-}
-
-void CPU::or_a_hl() {
-
-	byte val_to_compare = bus.read_memory(regs.get_HL());
-	byte original_a = regs.regs_8b[A];
-
-	regs.regs_8b[A] = original_a | val_to_compare;
-
-	bool z, n, h, c;
-
-	z = (regs.regs_8b[A] == 0);
-	n = 0;
-	h = 0;
-	c = 0;
-	regs.set_flags(z, n, h, c);
+	if (reg_id == HL_LOC) {
+		return 2;
+	}
+	return 1;
 
 }
 
-void CPU::or_a(byte val) {
+
+byte CPU::or_a(byte val) {
 
 	byte original_a = regs.regs_8b[A];
 
@@ -122,9 +104,11 @@ void CPU::or_a(byte val) {
 	c = 0;
 	regs.set_flags(z, n, h, c);
 
+	return 2;
+
 }
 
-void CPU::xor_a(Reg8 reg_id) {
+byte CPU::xor_a(Reg8 reg_id) {
 
 	byte val_to_compare = get_Reg8(reg_id);
 	byte original_a = regs.regs_8b[A];
@@ -139,26 +123,15 @@ void CPU::xor_a(Reg8 reg_id) {
 	c = 0;
 	regs.set_flags(z, n, h, c);
 
-}
-
-void CPU::xor_a_hl() {
-
-	byte val_to_compare = bus.read_memory(regs.get_HL());
-	byte original_a = regs.regs_8b[A];
-
-	regs.regs_8b[A] = original_a ^ val_to_compare;
-
-	bool z, n, h, c;
-
-	z = (regs.regs_8b[A] == 0);
-	n = 0;
-	h = 0;
-	c = 0;
-	regs.set_flags(z, n, h, c);
+	if (reg_id == HL_LOC) {
+		return 2;
+	}
+	return 1;
 
 }
 
-void CPU::xor_a(byte val) {
+
+byte CPU::xor_a(byte val) {
 
 	byte original_a = regs.regs_8b[A];
 
@@ -171,6 +144,8 @@ void CPU::xor_a(byte val) {
 	h = 0;
 	c = 0;
 	regs.set_flags(z, n, h, c);
+
+	return 2;
 
 }
 
@@ -210,7 +185,7 @@ void CPU::set(byte test_bit, Reg8 val_loc) {
 
 // BITSHIFT INSTRUCTIONS
 
-void CPU::rl(Reg8 reg_to_rotate) {
+byte CPU::rl(Reg8 reg_to_rotate) {
 
 	byte old_val = get_Reg8(reg_to_rotate);
 	bool old_c = regs.get_c_flag();
@@ -224,15 +199,19 @@ void CPU::rl(Reg8 reg_to_rotate) {
 	set_Reg8(reg_to_rotate, new_val);
 
 	regs.set_flags(z, 0, 0, new_c);
+
+	return 2;
 }
 
-void CPU::rla() {
+byte CPU::rla() {
 	rl(A);
 	regs.set_z_flag(0);
+
+	return 1;
 }
 
 
-void CPU::rlc(Reg8 reg_to_rotate) {
+byte CPU::rlc(Reg8 reg_to_rotate) {
 
 	byte old_val = get_Reg8(reg_to_rotate);
 	byte left_bit = old_val & 0x80;
@@ -244,16 +223,19 @@ void CPU::rlc(Reg8 reg_to_rotate) {
 	set_Reg8(reg_to_rotate, new_val);
 
 	regs.set_flags(z, 0, 0, c);
+
+	return 2;
 }
 
 
-void CPU::rlca() {
+byte CPU::rlca() {
 	rlc(A);
 	regs.set_z_flag(0);
+	return 1;
 }
 
 
-void CPU::rr(Reg8 reg_to_rotate) {
+byte CPU::rr(Reg8 reg_to_rotate) {
 
 	byte old_val = get_Reg8(reg_to_rotate);
 	bool old_c = regs.get_c_flag();
@@ -267,14 +249,18 @@ void CPU::rr(Reg8 reg_to_rotate) {
 
 	regs.set_flags(z, 0, 0, new_c);
 
+	return 2;
+
 }
 
-void CPU::rra() {
+byte CPU::rra() {
 	rr(A);
 	regs.set_z_flag(0);
+
+	return 1;
 }
 
-void CPU::rrc(Reg8 reg_to_rotate) {
+byte CPU::rrc(Reg8 reg_to_rotate) {
 
 	byte old_val = get_Reg8(reg_to_rotate);
 	byte right_bit = old_val & 0x01;
@@ -287,17 +273,20 @@ void CPU::rrc(Reg8 reg_to_rotate) {
 
 	regs.set_flags(z, 0, 0, c);
 
+	return 2;
+
 }
 
 
-void CPU::rrca() {
+byte CPU::rrca() {
 	rrc(A);
 	regs.set_z_flag(0);
 
+	return 1;
 }
 
 
-void CPU::sla(Reg8 reg_to_shift) {
+byte CPU::sla(Reg8 reg_to_shift) {
 
 	byte old_val = get_Reg8(reg_to_shift);
 	byte left_bit = old_val & 0x80;
@@ -309,9 +298,11 @@ void CPU::sla(Reg8 reg_to_shift) {
 
 	regs.set_flags(z, 0, 0, c);
 
+	return 2;
+
 }
 
-void CPU::sra(Reg8 reg_to_shift) {
+byte CPU::sra(Reg8 reg_to_shift) {
 
 	byte old_val = get_Reg8(reg_to_shift);
 	byte right_bit = old_val & 0x01;
@@ -324,9 +315,11 @@ void CPU::sra(Reg8 reg_to_shift) {
 
 	regs.set_flags(z, 0, 0, c);
 
+	return 2;
+
 }
 
-void CPU::srl(Reg8 reg_to_shift) {
+byte CPU::srl(Reg8 reg_to_shift) {
 
 	byte old_val = get_Reg8(reg_to_shift);
 	byte right_bit = old_val & 0x01;
@@ -338,9 +331,10 @@ void CPU::srl(Reg8 reg_to_shift) {
 
 	regs.set_flags(z, 0, 0, c);
 
+	return 2;
 }
 
-void CPU::swap(Reg8 reg_to_shift) {
+byte CPU::swap(Reg8 reg_to_shift) {
 
 	byte old_val = get_Reg8(reg_to_shift);
 	byte old_lower = old_val & 0x0F;
@@ -352,4 +346,6 @@ void CPU::swap(Reg8 reg_to_shift) {
 	set_Reg8(reg_to_shift, new_val);
 
 	regs.set_flags(z, 0, 0, 0);
+
+	return 2;
 }

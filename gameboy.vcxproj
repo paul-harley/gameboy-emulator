@@ -146,11 +146,13 @@
     <ClCompile Include="cpu_control_flow.cpp" />
     <ClCompile Include="cpu_loading.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ppu.cpp" />
     <ClCompile Include="registers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bus.h" />
     <ClInclude Include="cpu.h" />
+    <ClInclude Include="ppu.h" />
     <ClInclude Include="registers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

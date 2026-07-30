@@ -1,0 +1,16 @@
+#include "ppu.h"
+
+void PPU::tick(int cycles)
+{
+    dot_counter += cycles;
+
+    while (dot_counter >= 456)
+    {
+        dot_counter -= 456;
+
+        ly++;
+
+        if (ly == 154)
+            ly = 0;
+    }
+}

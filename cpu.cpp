@@ -65,50 +65,44 @@ byte CPU::decode_block_0(byte instruction) {
 		Reg16 dst_reg = decode_reg16_bits(decider_bits);
 		word val_to_ld = fetch_16();
 		//ld r16, imm16
-		ld(dst_reg, val_to_ld);
-		return 3;
+		return ld(dst_reg, val_to_ld);
 	}
 
 	case 0x2: {
 		//ld [r16mem], a
 		Reg16 save_address_loc = decode_reg16_mem_bits(decider_bits);
-		ld_to_mem_A(save_address_loc);
-		return 2;
+		return ld_to_mem_A(save_address_loc);
 	}
 
 	case 0xA: {
 		//ld a, [r16mem]
 		Reg16 data_address_loc = decode_reg16_mem_bits(decider_bits);
-		ld_to_A_mem(data_address_loc);
-		return 2;
+		return ld_to_A_mem(data_address_loc);
 	}
 
 	case 0x8: {
 		//ld[imm16], sp
 		word address = fetch_16();
-		ld_to_mem_sp(address);
-		return 5;
+		return ld_to_mem_sp(address);
 	}
 
 
 	case 0x3: {
 		//inc r16
 		Reg16 reg = decode_reg16_bits(decider_bits);
-		inc(reg);
-		return 2;
+		return inc(reg);
+		
 	}
 	case 0xB: {
 		//dec r16
 		Reg16 reg = decode_reg16_bits(decider_bits);
-		dec(reg);
-		return 2;
+		return dec(reg);
 	}
 
 	case 0x9: {
 		//add hl, r16
 		Reg16 reg = decode_reg16_bits(decider_bits);
-		add_HL(reg);
-		return 2;
+		return add_HL(reg);
 	}
 
 	}
@@ -121,23 +115,22 @@ byte CPU::decode_block_0(byte instruction) {
 	case 0x4: {
 		//inc r8
 		Reg8 reg = decode_reg8_bits(decider_bits);
-		inc(reg);
-		return 1;
+		return inc(reg);
+		
 	}
 
 	case 0x5: {
 		//dec r8
 		Reg8 reg = decode_reg8_bits(decider_bits);
-		dec(reg);
-		return 1;
+		return dec(reg);
+		
 	}
 
 	case 0x6: {
 		//ld r8, imm8
 		Reg8 reg = decode_reg8_bits(decider_bits);
 		byte val_to_add = fetch();
-		ld(reg, val_to_add);
-		return 2;
+		return ld(reg, val_to_add);
 	}
 
 	case 0x0: {
@@ -159,53 +152,42 @@ byte CPU::decode_block_0(byte instruction) {
 	switch (instruction) {
 	case 0x7:
 		//rlca
-		rlca();
-		return 1;
+		return rlca();
 	case 0xF:
 		//rrca
-		rrca();
-		return 1;
+		return rrca();
 	case 0x17:
 		//rla
-		rla();
-		return 1;
+		return rla();
 	case 0x1F:
 		//rra
-		rra();
-		return 1;
+		return rra();
 	case 0x27:
 		//daa
-		daa();
-		return 1;
+		return daa();
 	case 0x2F:
 		//cpl
-		cpl();
-		return 1;
+		return cpl();
 	case 0x37:
 		//scf
-		scf();
-		return 1;
+		return scf();
 	case 0x3F:
 		//ccf
-		ccf();
-		return 1;
+		return ccf();
 
 
 	
 	case 0x18: {
 		//jr imm8
 		sbyte offset = fetch();
-		jr(offset);
-		return 3;
+		return jr(offset);
 	}
 
 	case 0x10:
 		//stop
-		break;
+		return 0;
 
 	}
-
-
 }
 
 byte CPU::decode_block_1(byte instruction) {
@@ -218,8 +200,7 @@ byte CPU::decode_block_1(byte instruction) {
 		Reg8 dst = decode_reg8_bits((instruction & 0x38) >> 3);
 		Reg8 src = decode_reg8_bits(instruction & 0x07);
 
-		ld(dst, src);
-		return 1;
+		return ld(dst, src);
 	}
 	}
 }
@@ -232,29 +213,21 @@ byte CPU::decode_block_2(byte instruction) {
 	switch (operation_bits) {
 
 	case 0x80:
-		add_a(reg);
-		return 1;
+		return add_a(reg);
 	case 0x88:
-		adc_a(reg);
-		return 1;
+		return adc_a(reg);
 	case 0x90:
-		sub_a(reg);
-		return 1;
+		return sub_a(reg);
 	case 0x98:
-		sbc_a(reg);
-		return 1;
+		return sbc_a(reg);
 	case 0xA0:
-		and_a(reg);
-		return 1;
+		return and_a(reg);
 	case 0xA8:
-		xor_a(reg);
-		return 1;
+		return xor_a(reg);
 	case 0xB0:
-		or_a(reg);
-		return 1;
+		return or_a(reg);
 	case 0xB8:
-		cp_a(reg);
-		return 1;
+		return cp_a(reg);
 	}
 
 
@@ -264,46 +237,33 @@ byte CPU::decode_block_3(byte instruction) {
 
 	switch (instruction) {
 	case 0xC6:
-		add_a(fetch());
-		return 2;
+		return add_a(fetch());
 	case 0xCE:
-		adc_a(fetch());
-		return 2;
+		return adc_a(fetch());
 	case 0xD6:
-		sub_a(fetch());
-		return 2;
+		return sub_a(fetch());
 	case 0xDE:
-		sbc_a(fetch());
-		return 2;
+		return sbc_a(fetch());
 	case 0xE6:
-		and_a(fetch());
-		return 2;
+		return and_a(fetch());
 	case 0xEE:
-		xor_a(fetch());
-		return 2;
+		return xor_a(fetch());
 	case 0xF6:
-		or_a(fetch());
-		return 2;
+		return or_a(fetch());
 	case 0xFE:
-		cp_a(fetch());
-		return 2;
+		return cp_a(fetch());
 
 
 	case 0xC9:
-		ret();
-		return 4;
+		return ret();
 	case 0xD9:
-		ret_i();
-		return 4;
+		return ret_i();
 	case 0xC3:
-		jp(fetch_16());
-		return 4;
+		return jp(fetch_16());
 	case 0xE9:
-		jp_hl();
-		return 1;
+		return jp_hl();
 	case 0xCD:
-		call(fetch_16());
-		return 6;
+		return call(fetch_16());
 
 
 	case 0xCB:
@@ -311,8 +271,7 @@ byte CPU::decode_block_3(byte instruction) {
 
 
 	case 0xE2:
-		ldh_c_a();
-		return 2;
+		return ldh_c_a();
 	case 0xE0:
 		ld_to_mem_A(0xFF00|fetch());
 		return 3;
@@ -332,22 +291,17 @@ byte CPU::decode_block_3(byte instruction) {
 
 
 	case 0xE8:
-		add_SP(fetch());
-		return 4;
+		return add_SP(fetch());
 	case 0xF8:
-		ld_to_hl_spe8(fetch());
-		return 3;
+		return ld_to_hl_spe8(fetch());
 	case 0xF9:
-		ld_sp_hl();
-		return 2;
+		return ld_sp_hl();
 
 
 	case 0xF3:
-		di();
-		return 1;
+		return di();
 	case 0xFB:
-		ei();
-		return 1;
+		return ei();
 	}
 
 	// other ones in this section have some other data within instruction
@@ -372,20 +326,17 @@ byte CPU::decode_block_3(byte instruction) {
 
 	case 0x7: {
 		byte target_bits = (instruction & 0x18) >> 3;
-		rst(target_bits << 3); //multiply by 8
-		return 4;
+		return rst(target_bits << 3); //multiply by 8
 	}
 
 	case 0x1: {
 		byte reg_stack_bits = (instruction & 0x30) >> 4;
-		pop(decode_reg16_stk_bits(reg_stack_bits));
-		return 3;
+		return pop(decode_reg16_stk_bits(reg_stack_bits));
 	}
 
 	case 0x5: {
 		byte reg_stack_bits = (instruction & 0x30) >> 4;
-		push(decode_reg16_stk_bits(reg_stack_bits));
-		return 4;
+		return push(decode_reg16_stk_bits(reg_stack_bits));
 	}
 	}
 
@@ -399,29 +350,21 @@ byte CPU::decode_prefixed(byte instruction) {
 
 	switch (decider_bits) {
 	case 0x0:
-		rlc(decode_reg8_bits(reg8_bits));
-		return 2;
+		return rlc(decode_reg8_bits(reg8_bits));
 	case 0x08:
-		rrc(decode_reg8_bits(reg8_bits));
-		return 2;
+		return rrc(decode_reg8_bits(reg8_bits));
 	case 0x10:
-		rl(decode_reg8_bits(reg8_bits));
-		return 2;
+		return rl(decode_reg8_bits(reg8_bits));
 	case 0x18:
-		rr(decode_reg8_bits(reg8_bits));
-		return 2;
+		return rr(decode_reg8_bits(reg8_bits));
 	case 0x20:
-		sla(decode_reg8_bits(reg8_bits));
-		return 2;
+		return sla(decode_reg8_bits(reg8_bits));
 	case 0x28:
-		sra(decode_reg8_bits(reg8_bits));
-		return 2;
+		return sra(decode_reg8_bits(reg8_bits));
 	case 0x30:
-		swap(decode_reg8_bits(reg8_bits));
-		return 2;
+		return swap(decode_reg8_bits(reg8_bits));
 	case 0x38:
-		srl(decode_reg8_bits(reg8_bits));
-		return 2;
+		return srl(decode_reg8_bits(reg8_bits));
 	}
 
 	decider_bits = instruction & 0xC0;
@@ -431,7 +374,7 @@ byte CPU::decode_prefixed(byte instruction) {
 	switch (decider_bits) {
 	case 0x40: {
 		Reg8 reg = decode_reg8_bits(reg8_bits);
-		byte val = get_Reg8(decode_reg8_bits(reg8_bits));
+		byte val = get_Reg8(reg);
 		bit(bit_index, val);
 		if (reg == HL_LOC) {
 			return 3;
@@ -580,7 +523,7 @@ Cond CPU::decode_cond_bits(byte cond_2_bit_code) {
 
 // CARRY FLAG INSTRUCTIONS
 
-void CPU::ccf() {
+byte CPU::ccf() {
 
 	regs.set_n_flag(0);
 	regs.set_h_flag(0);
@@ -592,15 +535,18 @@ void CPU::ccf() {
 		regs.set_c_flag(1);
 	}
 
+	return 1;
 
 }
 
 
-void CPU::scf() {
+byte CPU::scf() {
 
 	regs.set_n_flag(0);
 	regs.set_h_flag(0);
 	regs.set_c_flag(1);
+
+	return 1;
 
 }
 
@@ -608,12 +554,14 @@ void CPU::scf() {
 
 //INTERUPTS 
 
-void CPU::di() {
+byte CPU::di() {
 	ime = false;
+	return 1;
 }
 
-void CPU::ei() {
+byte CPU::ei() {
 	ime = true;
+	return 1;
 }
 
 void CPU::halt() {
@@ -622,7 +570,7 @@ void CPU::halt() {
 
 
 // MISC INSTRUCTIONS
-void CPU::daa() {
+byte CPU::daa() {
 
 	byte adjustment = 0;
 	bool n = regs.get_n_flag();
@@ -656,6 +604,8 @@ void CPU::daa() {
 	bool z = (regs.regs_8b[A] != 0);
 	regs.set_z_flag(z);
 	regs.set_h_flag(0);
+
+	return 1;
 }
 
 

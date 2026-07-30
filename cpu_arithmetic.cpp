@@ -186,61 +186,55 @@ void CPU::sub_a_values_set_flags(byte a, byte val1) {
 }
 
 
-void CPU::adc_a(Reg8 val_loc) {
+byte CPU::adc_a(Reg8 val_loc) {
 	byte c_flag = regs.get_c_flag();
 	byte original_a = regs.regs_8b[A];
 	byte val_to_add = get_Reg8(val_loc);
 
 	add_a_values_set_flags(c_flag, original_a, val_to_add);
 
+	if (val_loc == HL_LOC) {
+		return 2;
+	}
+	return 1;
+
 }
 
-void CPU::adc_a_hl() {
+byte CPU::adc_a(byte val_to_add) {
 
-	byte val_to_add = bus.read_memory(regs.get_HL());
 	byte original_a = regs.regs_8b[A];
 	byte c_flag = regs.get_c_flag();
 
 	add_a_values_set_flags(c_flag, original_a, val_to_add);
 
+	return 2;
 }
 
-void CPU::adc_a(byte val_to_add) {
-
-	byte original_a = regs.regs_8b[A];
-	byte c_flag = regs.get_c_flag();
-
-	add_a_values_set_flags(c_flag, original_a, val_to_add);
-
-}
-
-void CPU::add_a(Reg8 val_loc) {
+byte CPU::add_a(Reg8 val_loc) {
 
 	byte original_a = regs.regs_8b[A];
 	byte val_to_add = get_Reg8(val_loc);
 
 	add_a_values_set_flags(original_a, val_to_add);
 
-}
-
-void CPU::add_a_hl() {
-
-	byte original_a = regs.regs_8b[A];
-	byte val_to_add = bus.read_memory(regs.get_HL());
-
-	add_a_values_set_flags(original_a, val_to_add);
+	if (val_loc == HL_LOC) {
+		return 2;
+	}
+	return 1;
 
 }
 
-void CPU::add_a(byte val_to_add) {
+
+byte CPU::add_a(byte val_to_add) {
 
 	byte original_a = regs.regs_8b[A];
 
 	add_a_values_set_flags(original_a, val_to_add);
+	return 2;
 }
 
 
-void CPU::cp_a(Reg8 val_loc) {
+byte CPU::cp_a(Reg8 val_loc) {
 
 	byte reg_val = get_Reg8(val_loc);
 	byte original_a = regs.regs_8b[A];
@@ -255,11 +249,16 @@ void CPU::cp_a(Reg8 val_loc) {
 	bool h = (original_a & 0xF) < (reg_val & 0xF);
 	regs.set_h_flag(h);
 
+	if (val_loc == HL_LOC) {
+		return 2;
+	}
+	return 1;
+
 }
 
-void CPU::cp_a_hl() {
 
-	byte val = bus.read_memory(regs.get_HL());
+byte CPU::cp_a(byte val) {
+
 	byte original_a = regs.regs_8b[A];
 
 	bool z = ((original_a - val) == 0);
@@ -272,90 +271,84 @@ void CPU::cp_a_hl() {
 	bool h = (original_a & 0xF) < (val & 0xF);
 	regs.set_h_flag(h);
 
+	return 2;
 }
 
-void CPU::cp_a(byte val) {
-
-	byte original_a = regs.regs_8b[A];
-
-	bool z = ((original_a - val) == 0);
-	regs.set_z_flag(z);
-	regs.set_n_flag(1);
-
-	bool c = (val > original_a);
-	regs.set_c_flag(c);
-
-	bool h = (original_a & 0xF) < (val & 0xF);
-	regs.set_h_flag(h);
-
-}
-
-void CPU::dec(Reg8 val_loc) {
+byte CPU::dec(Reg8 val_loc) {
 	byte new_val = (get_Reg8(val_loc)) - 1;
 	set_Reg8(val_loc, new_val);
+
+	if (val_loc == HL_LOC) {
+		return 3;
+	}
+	return 1;
 }
 
-void CPU::inc(Reg8 val_loc) {
+byte CPU::inc(Reg8 val_loc) {
 	byte new_val = (get_Reg8(val_loc)) - 1;
 	set_Reg8(val_loc, new_val);
+
+	if (val_loc == HL_LOC) {
+		return 3;
+	}
+	return 1;
 }
 
 
 // might refactor these into a separate function like add later
 
-void CPU::sbc_a(Reg8 val_loc) {
+byte CPU::sbc_a(Reg8 val_loc) {
 
 	byte original_a = regs.regs_8b[A];
 	byte val_to_sub = get_Reg8(val_loc);
 	byte c_flag = regs.get_c_flag();
 
 	sub_a_values_set_flags(original_a, val_to_sub, c_flag);
+
+	if (val_loc == HL_LOC) {
+		return 2;
+	}
+	return 1;
 }
 
 
-void CPU::sbc_a_hl() {
 
-	byte original_a = regs.regs_8b[A];
-	byte val_to_sub = bus.read_memory(regs.get_HL());
-	byte c_flag = regs.get_c_flag();
-
-	sub_a_values_set_flags(original_a, val_to_sub, c_flag);
-}
-
-void CPU::sbc_a(byte val_to_sub) {
+byte CPU::sbc_a(byte val_to_sub) {
 
 	byte original_a = regs.regs_8b[A];
 	byte c_flag = regs.get_c_flag();
 
 	sub_a_values_set_flags(original_a, val_to_sub, c_flag);
+
+	return 2;
 }
 
-void CPU::sub_a(Reg8 val_loc) {
+byte CPU::sub_a(Reg8 val_loc) {
 
 	byte original_a = regs.regs_8b[A];
 	byte val_to_sub = get_Reg8(val_loc);
 
 	sub_a_values_set_flags(original_a, val_to_sub);
+
+	if (val_loc == HL_LOC) {
+		return 2;
+	}
+	return 1;
 }
 
 
-void CPU::sub_a_hl() {
-	byte original_a = regs.regs_8b[A];
-	byte val_to_sub = bus.read_memory(regs.get_HL());
-
-	sub_a_values_set_flags(original_a, val_to_sub);
-}
-
-void CPU::sub_a(byte val_to_sub) {
+byte CPU::sub_a(byte val_to_sub) {
 	byte original_a = regs.regs_8b[A];
 
 	sub_a_values_set_flags(original_a, val_to_sub);
+
+	return 2;
 }
 
 
 // 16 BIT ARITHMETIC
 
-void CPU::add_HL(Reg16 val_loc) {
+byte CPU::add_HL(Reg16 val_loc) {
 	word val_to_add = regs.get_Reg16(val_loc);
 	word orginal_hl = regs.get_HL();
 
@@ -384,13 +377,17 @@ void CPU::add_HL(Reg16 val_loc) {
 	regs.set_n_flag(0);
 	regs.set_c_flag(c);
 	regs.set_h_flag(h);
+
+	return 2;
 }
 
 
-void CPU::dec(Reg16 val_loc) {
+byte CPU::dec(Reg16 val_loc) {
 	regs.set_Reg16(val_loc, regs.get_Reg16(val_loc) - 1);
+	return 2;
 }
 
-void CPU::inc(Reg16 val_loc) {
+byte CPU::inc(Reg16 val_loc) {
 	regs.set_Reg16(val_loc, regs.get_Reg16(val_loc) + 1);
+	return 2;
 }

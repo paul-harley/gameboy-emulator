@@ -5,6 +5,8 @@
 #include <string>
 #include <fstream>
 
+#include "ppu.h"
+
 typedef uint8_t byte;
 typedef uint16_t word;
 
@@ -50,6 +52,9 @@ private:
 	MemoryRegion* get_correct_memory(uint16_t address);
 
 	word fix_echo_address(word address);
+
+	PPU ppu;
+
 
 public:								
 	Bus();
