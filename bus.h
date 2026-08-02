@@ -53,12 +53,12 @@ private:
 
 	word fix_echo_address(word address);
 
-	PPU ppu;
 
 
-public:								
+public:
+
 	Bus();
-
+	PPU ppu;
 
 
 	uint8_t read_memory(uint16_t address);

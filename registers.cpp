@@ -217,7 +217,7 @@ void Registers::set_h_flag(byte new_val) {
 	byte full_data = regs_8b[F];
 	byte current_flags = full_data >> 4;
 
-	byte new_flags = current_flags & 0b1011;
+	byte new_flags = current_flags & 0b1101;
 	new_flags += (2 * h);
 	new_flags = new_flags << 4;
 
@@ -237,7 +237,7 @@ void Registers::set_c_flag(byte new_val) {
 	byte full_data = regs_8b[F];
 	byte current_flags = full_data >> 4;
 
-	byte new_flags = current_flags & 0b1011;
+	byte new_flags = current_flags & 0b1110;
 	new_flags += (1 * c);
 	new_flags = new_flags << 4;
 

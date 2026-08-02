@@ -40,7 +40,7 @@ byte CPU::add_SP(sbyte val_to_add) {
 	bool z, n, h, c;
 
 	h = half_carry_add_16(original_sp, val_to_add);
-	c = carry_add_16(original_sp, val_to_add);
+	c = carry_add_8(original_sp, val_to_add);
 
 	regs.SP = original_sp + val_to_add;
 
@@ -178,6 +178,8 @@ byte CPU::jr(sbyte offset) {
 }
 
 byte CPU::jr(sbyte offset, Cond condition) {
+
+
 	if (check_conds(condition)) {
 		regs.PC += offset;
 		return 3;

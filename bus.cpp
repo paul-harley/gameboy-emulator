@@ -33,6 +33,14 @@ uint8_t Bus::read_memory(uint16_t address) {
 
 	address = fix_echo_address(address);
 
+	switch (address)
+	{
+	case 0xFF44:
+		return 0x90; // just return this every time for now 
+		//return ppu.get_ly();
+	};
+
+
 	const MemoryRegion* mem_region = get_correct_memory(address);
 
 	uint16_t local_address = address - mem_region->start_address;
@@ -43,6 +51,13 @@ uint8_t Bus::read_memory(uint16_t address) {
 
 
 void Bus::write_memory(uint16_t address, uint8_t data) {
+
+	if (address <= 0x7FFF) {
+		std::cout << "WARNING: write to ROM area! addr="
+			<< std::hex << address << " data=" << (int)data << std::endl;
+	}
+
+
 
 	address = fix_echo_address(address);
 
@@ -105,7 +120,11 @@ void Bus::load_rom(const std::string filename) {
 		}
 
 
-		write_memory(address, current_byte);
+		//write_memory(address, current_byte);
+		MemoryRegion* mem_region = get_correct_memory(address);
+		uint16_t local_address = address - mem_region->start_address;
+		mem_region->memory[local_address] = current_byte;
+
 		address++;
 	}
 

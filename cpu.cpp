@@ -52,12 +52,56 @@ byte CPU::decode_block_0(byte instruction) {
 
 	// TODO: add nop and stop
 
-	if (instruction == 0) {
+	switch (instruction) {
+	case 0:
 		return 1;
+
+	case 0x8: {
+		//ld[imm16], sp
+		word address = fetch_16();
+		return ld_to_mem_sp(address);
+	}
+
+	case 0x7:
+		//rlca
+		return rlca();
+	case 0xF:
+		//rrca
+		return rrca();
+	case 0x17:
+		//rla
+		return rla();
+	case 0x1F:
+		//rra
+		return rra();
+	case 0x27:
+		//daa
+		return daa();
+	case 0x2F:
+		//cpl
+		return cpl();
+	case 0x37:
+		//scf
+		return scf();
+	case 0x3F:
+		//ccf
+		return ccf();
+
+
+	
+	case 0x18: {
+		//jr imm8
+		sbyte offset = fetch();
+		return jr(offset);
+	}
+
+	case 0x10:
+		//stop
+		return 0;
+
 	}
 
 	byte last_4_bits = instruction & 0xF;
-
 	byte decider_bits = (instruction & 0x30) >> 4;
 	switch (last_4_bits) {
 
@@ -79,13 +123,6 @@ byte CPU::decode_block_0(byte instruction) {
 		Reg16 data_address_loc = decode_reg16_mem_bits(decider_bits);
 		return ld_to_A_mem(data_address_loc);
 	}
-
-	case 0x8: {
-		//ld[imm16], sp
-		word address = fetch_16();
-		return ld_to_mem_sp(address);
-	}
-
 
 	case 0x3: {
 		//inc r16
@@ -149,45 +186,6 @@ byte CPU::decode_block_0(byte instruction) {
 	}
 	}
 
-	switch (instruction) {
-	case 0x7:
-		//rlca
-		return rlca();
-	case 0xF:
-		//rrca
-		return rrca();
-	case 0x17:
-		//rla
-		return rla();
-	case 0x1F:
-		//rra
-		return rra();
-	case 0x27:
-		//daa
-		return daa();
-	case 0x2F:
-		//cpl
-		return cpl();
-	case 0x37:
-		//scf
-		return scf();
-	case 0x3F:
-		//ccf
-		return ccf();
-
-
-	
-	case 0x18: {
-		//jr imm8
-		sbyte offset = fetch();
-		return jr(offset);
-	}
-
-	case 0x10:
-		//stop
-		return 0;
-
-	}
 }
 
 byte CPU::decode_block_1(byte instruction) {

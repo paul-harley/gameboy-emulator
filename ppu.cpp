@@ -14,3 +14,7 @@ void PPU::tick(int cycles)
             ly = 0;
     }
 }
+
+byte PPU::get_ly() {
+    return ly;
+}

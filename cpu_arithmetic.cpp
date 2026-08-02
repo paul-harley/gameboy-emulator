@@ -40,16 +40,11 @@ bool CPU::half_carry_add_8(byte val1, byte val2) {
 
 	byte full_result = lower_nibble_1 + lower_nibble_2;
 
-	// if first byte of full_result is not 0 
-	// it has been used and flag would be set
+	if (lower_nibble_1 + lower_nibble_2 > 0xF){
+		return true;
 
-	byte important_bit = full_result & 0b00010000;
-
-	if (important_bit == 0) {
-		return false;
 	}
-
-	return true;
+	return false;
 
 }
 
@@ -276,7 +271,16 @@ byte CPU::cp_a(byte val) {
 
 byte CPU::dec(Reg8 val_loc) {
 	byte new_val = (get_Reg8(val_loc)) - 1;
+	bool h = half_carry_sub_8(get_Reg8(val_loc), 1);
+	regs.set_h_flag(h);
+
+
 	set_Reg8(val_loc, new_val);
+
+
+	bool z = (new_val == 0);
+	regs.set_z_flag(z);
+	regs.set_n_flag(1);
 
 	if (val_loc == HL_LOC) {
 		return 3;
@@ -285,10 +289,20 @@ byte CPU::dec(Reg8 val_loc) {
 }
 
 byte CPU::inc(Reg8 val_loc) {
-	byte new_val = (get_Reg8(val_loc)) - 1;
+	byte new_val = (get_Reg8(val_loc)) + 1;
+
+	bool h = half_carry_add_8(get_Reg8(val_loc), 1);
+	regs.set_h_flag(h);
+
 	set_Reg8(val_loc, new_val);
 
-	if (val_loc == HL_LOC) {
+
+	bool z = (new_val == 0);
+	regs.set_z_flag(z);
+	regs.set_n_flag(0);
+
+
+	if (val_loc == HL_LOC){
 		return 3;
 	}
 	return 1;
