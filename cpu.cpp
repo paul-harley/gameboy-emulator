@@ -586,11 +586,11 @@ byte CPU::daa() {
 		regs.regs_8b[A] -= adjustment;
 	}
 	else {
-		if (h || (regs.regs_8b[A] & 0xF) > 0x9) {
+		if (h || ((regs.regs_8b[A] & 0xF) > 0x9)) {
 			adjustment += 0x6;
 		}
 		if (c || regs.regs_8b[A] > 0x99 ){
-			adjustment += 60;
+			adjustment += 0x60;
 			regs.set_c_flag(1);
 		}
 
@@ -599,7 +599,7 @@ byte CPU::daa() {
 
 	}
 
-	bool z = (regs.regs_8b[A] != 0);
+	bool z = (regs.regs_8b[A] == 0);
 	regs.set_z_flag(z);
 	regs.set_h_flag(0);
 

@@ -57,6 +57,11 @@ void Bus::write_memory(uint16_t address, uint8_t data) {
 			<< std::hex << address << " data=" << (int)data << std::endl;
 	}
 
+	if (address == 0x4244)
+	{
+		printf("WRITE 4244 = %02X\n", data);
+	}
+
 
 
 	address = fix_echo_address(address);

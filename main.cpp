@@ -20,11 +20,9 @@ void print_bin(byte val) {
 
 
 
-// Somewhere with a long enough lifetime - e.g. a global, or a member of your
-// emulator/CPU class, NOT declared fresh inside the loop
 std::ofstream log_file("log.txt");
 
-void log_state(CPU& c) {
+static void log_state(CPU& c) {
     log_file << std::hex << std::setfill('0');
 
     log_file << "A:" << std::setw(2) << static_cast<int>(c.regs.regs_8b[A]) << " ";
@@ -52,10 +50,17 @@ void log_state(CPU& c) {
 int main() {
 
 	CPU my_cpu;
-    std::array<std::string, 4> rom_names = {"01-special.gb", "02-interrupts.gb", "03-op sp,hl.gb", "04-op r,imm.gb"};
+    std::array<std::string, 11> rom_names = {"01-special.gb", "02-interrupts.gb", "03-op sp,hl.gb", "04-op r,imm.gb", 
+        "05-op rp.gb", "06-ld r,r.gb", "07-jr,jp,call,ret,rst.gb", "08-misc instrs.gb", "09-op r,r.gb",
+        "10-bit ops.gb", "11-op a,(hl).gb"};
+
+    //ROM 07 says passed but gameboy doctor says diversion around rst, 
+    //instruction gbd reads is e7, my one reads c7
+    // keep an eye in future if any weird bugs, check this again
+
 
 	//my_cpu.bus.load_rom("roms/tests/cpu_instrs/cpu_instrs.gb");
-    my_cpu.bus.load_rom("roms/tests/cpu_instrs/individual/" + rom_names[2]);
+    my_cpu.bus.load_rom("roms/tests/cpu_instrs/individual/" + rom_names[10]);
 
 
     my_cpu.bus.dump_memory(0x100, 16);
@@ -63,7 +68,7 @@ int main() {
 	my_cpu.regs.PC = 0x100;
 
     long long count = 0;
-    const long long max_instructions = 1000000;
+    const long long max_instructions = 7500000;
 
 
 

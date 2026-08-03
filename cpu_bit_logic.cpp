@@ -63,6 +63,11 @@ byte CPU::cpl() {
 		old_a = old_a >> 1;
 	}
 
+	regs.regs_8b[A] = new_result;
+	regs.set_n_flag(1);
+	regs.set_h_flag(1);
+	
+
 	return 1;
 
 }
@@ -154,9 +159,9 @@ byte CPU::xor_a(byte val) {
 // BITFLAG INSTRUCTIONS
 void CPU::bit(byte test_bit, byte value) {
 
-	bool z = false;
+	bool z = true;
 	if (value & (1 << test_bit)) {
-		z = true;
+		z = false;
 	}
 	regs.set_z_flag(z);
 	regs.set_n_flag(0);

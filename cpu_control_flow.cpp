@@ -74,11 +74,10 @@ byte CPU::ld_to_mem_sp(word save_loc) {
 
 byte CPU::ld_to_hl_spe8(sbyte val_to_add) {
 
-	bool c = carry_add_16(regs.SP, val_to_add);
-	bool h = half_carry_add_16(regs.SP, val_to_add);
+	bool c = carry_add_8(regs.SP, val_to_add);
+	bool h = half_carry_add_8(regs.SP, val_to_add);
 
-	regs.SP += val_to_add;
-	regs.set_HL(regs.SP);
+	regs.set_HL(regs.SP + val_to_add);
 
 	regs.set_flags(0, 0, h, c);
 
