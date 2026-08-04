@@ -2,10 +2,6 @@
 #include <iostream>
 
 
-Bus::Bus() {
-
-}
-
 word Bus::fix_echo_address(word address) {
 
 	if (address >= 0xE000 && address <= 0xFDFF) {
@@ -14,7 +10,7 @@ word Bus::fix_echo_address(word address) {
 	return address;
 }
 
-MemoryRegion* Bus::get_correct_memory(uint16_t address) {
+MemoryRegion* Bus::get_correct_memory(word address) {
 
 	for (MemoryRegion* region : main_memory) {
 
@@ -29,39 +25,45 @@ MemoryRegion* Bus::get_correct_memory(uint16_t address) {
 }
 
 
-uint8_t Bus::read_memory(uint16_t address) {
+uint8_t Bus::read_memory(word address) {
 
-	address = fix_echo_address(address);
-
-	switch (address)
-	{
+	switch (address) {
 	case 0xFF44:
 		return 0x90; // just return this every time for now 
 		//return ppu.get_ly();
+	case 0xFF0F:
+		return interrupts.IF;
+	case 0xFFFF:
+		return interrupts.IE;
 	};
+
+	address = fix_echo_address(address);
 
 
 	const MemoryRegion* mem_region = get_correct_memory(address);
 
-	uint16_t local_address = address - mem_region->start_address;
+	word local_address = address - mem_region->start_address;
 	return mem_region->memory[local_address];
 	return 0;
 }
 
 
 
-void Bus::write_memory(uint16_t address, uint8_t data) {
+void Bus::write_memory(word address, byte data) {
 
 	if (address <= 0x7FFF) {
 		std::cout << "WARNING: write to ROM area! addr="
 			<< std::hex << address << " data=" << (int)data << std::endl;
 	}
 
-	if (address == 0x4244)
-	{
-		printf("WRITE 4244 = %02X\n", data);
+	switch (address) {
+	case 0xFF0F:
+		interrupts.IF = data;
+		return;
+	case 0xFFFF:
+		interrupts.IE = data;
+		return;
 	}
-
 
 
 	address = fix_echo_address(address);
@@ -80,16 +82,16 @@ void Bus::write_memory(uint16_t address, uint8_t data) {
 }
 
 
-void Bus::dump_memory(uint16_t start_loc, uint8_t num_bytes) {
+void Bus::dump_memory(word start_loc, byte num_bytes) {
 
 	MemoryRegion* mem_region = get_correct_memory(start_loc);
 
 
-	uint16_t start_local_address = start_loc - mem_region->start_address;
-	uint16_t end = std::min(mem_region->end_address, static_cast<uint16_t>(start_local_address + num_bytes));
+	word start_local_address = start_loc - mem_region->start_address;
+	word end = std::min(mem_region->end_address, static_cast<word>(start_local_address + num_bytes));
 
 
-	for (uint16_t i = start_local_address; i < end; i++) {
+	for (word i = start_local_address; i < end; i++) {
 		std::cout
 			<< "0x" << std::hex << i << " : "
 			<< std::dec << static_cast<int>(mem_region->memory[i]) << "\n";
@@ -127,7 +129,7 @@ void Bus::load_rom(const std::string filename) {
 
 		//write_memory(address, current_byte);
 		MemoryRegion* mem_region = get_correct_memory(address);
-		uint16_t local_address = address - mem_region->start_address;
+		word local_address = address - mem_region->start_address;
 		mem_region->memory[local_address] = current_byte;
 
 		address++;

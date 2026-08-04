@@ -145,6 +145,8 @@
     <ClCompile Include="cpu_bit_logic.cpp" />
     <ClCompile Include="cpu_control_flow.cpp" />
     <ClCompile Include="cpu_loading.cpp" />
+    <ClCompile Include="gameboy.cpp" />
+    <ClCompile Include="interrupts.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ppu.cpp" />
     <ClCompile Include="registers.cpp" />
@@ -152,8 +154,11 @@
   <ItemGroup>
     <ClInclude Include="bus.h" />
     <ClInclude Include="cpu.h" />
+    <ClInclude Include="gameboy.h" />
+    <ClInclude Include="interrupts.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="registers.h" />
+    <ClInclude Include="types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

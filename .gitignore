@@ -63,3 +63,6 @@ compile_commands.json
 # Windows files
 Thumbs.db
 Desktop.ini
+
+
+*.txt

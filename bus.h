@@ -5,19 +5,18 @@
 #include <string>
 #include <fstream>
 
+#include "types.h"
 #include "ppu.h"
-
-typedef uint8_t byte;
-typedef uint16_t word;
+#include "interrupts.h"
 
 
 struct MemoryRegion{	
 	std::vector<uint8_t> memory;
 
-	uint16_t start_address;
-	uint16_t end_address;
+	word start_address;
+	word  end_address;
 
-	MemoryRegion(uint16_t start, uint16_t end)
+	MemoryRegion(word start, word end)
 		: start_address(start),
 		end_address(end),
 		memory(end - start + 1)
@@ -49,21 +48,22 @@ private:
 	std::array<MemoryRegion*, 9> main_memory = { &rom_bank0, &rom_bank1, &vram, &external_ram,
 		&wram, &oam, &io_registers, &hram, &ie_register };
 
-	MemoryRegion* get_correct_memory(uint16_t address);
+	MemoryRegion* get_correct_memory(word address);
 
 	word fix_echo_address(word address);
+	Interrupts interrupts;
 
 
 
 public:
 
-	Bus();
+	Bus(Interrupts& interrupts) : interrupts(interrupts) {}
 	PPU ppu;
 
 
-	uint8_t read_memory(uint16_t address);
-	void write_memory(uint16_t address, uint8_t data);
-	void dump_memory(uint16_t start_loc, uint8_t num_bytes);
+	byte read_memory(word address);
+	void write_memory(word address, byte data);
+	void dump_memory(word start_loc, byte num_bytes);
 	void load_rom(const std::string filename);
 
 };

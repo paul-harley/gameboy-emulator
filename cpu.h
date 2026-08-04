@@ -19,18 +19,26 @@ enum Cond {
 class CPU {
 
 public:
-	Bus bus;
+
+	CPU(Bus& bus, Interrupts& interrupts) : bus(bus), interrupts(interrupts) {}
+
+	Bus& bus;
+	Interrupts& interrupts;
 	Registers regs;
 
 	byte fetch();
 	byte decode(byte instruction);
-	void load_rom(const std::string filename);
+
+	bool ime = false; //inretupts based on this
+	bool ime_pending = false; // needed cause ei has a one intruction delay on setting the flag
+	bool halted = false;
+	bool halted_bug = false;
 
 
+	byte interrupt_handler();
 
 private:
 
-	bool ime = false; //inretupts based on this
 
 	word fetch_16();
 
@@ -192,7 +200,7 @@ private:
 	//INTERUPTS
 	byte di();
 	byte ei();
-	void halt(); //TODO: sort out halt
+	byte halt();
 
 
 	// MISC INSTRUCTIONS

@@ -552,18 +552,54 @@ byte CPU::scf() {
 
 //INTERUPTS 
 
+byte CPU::interrupt_handler() {
+	if (!ime) return 0;
+	if (!interrupts.pending()) return 0;
+
+	for (byte i = 0; i < 5; i++) {
+		byte current_mask = 1 << i;
+		if ((interrupts.IF & interrupts.IE & current_mask) != 0) {
+			ime = false;
+			interrupts.IF &= ~current_mask;
+
+			regs.SP -= 2;
+			bus.write_memory(regs.SP, regs.PC & 0xFF);
+			bus.write_memory(regs.SP + 1, (regs.PC >> 8) & 0xFF);
+
+			word vector_addresses[5] = { 0x40, 0x48, 0x50, 0x58, 0x60 };
+			regs.PC = vector_addresses[i];
+
+			return 20;
+
+		}
+	}
+
+	return 0;
+
+
+}
+
 byte CPU::di() {
 	ime = false;
+	ime_pending = false;
 	return 1;
 }
 
 byte CPU::ei() {
-	ime = true;
+	ime_pending = true;
 	return 1;
 }
 
-void CPU::halt() {
-
+byte CPU::halt() {
+	if (!ime && interrupts.pending()) {
+		// bug = don't actually halt, PC won't advance properly
+		// apparantly built in an tested in test roms
+		halted_bug = true;
+	}
+	else {
+		halted = true;
+	}
+	return 1;
 }
 
 
