@@ -150,6 +150,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ppu.cpp" />
     <ClCompile Include="registers.cpp" />
+    <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bus.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="interrupts.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="registers.h" />
+    <ClInclude Include="timer.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

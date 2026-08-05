@@ -18,8 +18,7 @@ void Gameboy::run(bool ls) {
         byte cycles;
 
         if (cpu.halted) {
-            cycles = 4; 
-            bus.ppu.tick(cycles);
+            cycles = 1; 
 
             if (cpu.interrupts.pending()) {
                 cpu.halted = false; // wake up regardless of IME
@@ -43,7 +42,10 @@ void Gameboy::run(bool ls) {
         }
 
         cycles += cpu.interrupt_handler();
-        bus.ppu.tick(cycles);
+
+        word t_cycles = cycles * 4;
+        bus.ppu.tick(t_cycles);
+        timer.tick(t_cycles);
 
 		count++;
 	}

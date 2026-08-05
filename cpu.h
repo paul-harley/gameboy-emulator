@@ -20,10 +20,15 @@ class CPU {
 
 public:
 
-	CPU(Bus& bus, Interrupts& interrupts) : bus(bus), interrupts(interrupts) {}
+	CPU(Bus& bus, Interrupts& interrupts, Timer& timer)
+		: bus(bus), 
+		interrupts(interrupts),
+		timer(timer)
+	{}
 
 	Bus& bus;
 	Interrupts& interrupts;
+	Timer& timer;
 	Registers regs;
 
 	byte fetch();

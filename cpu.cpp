@@ -569,7 +569,7 @@ byte CPU::interrupt_handler() {
 			word vector_addresses[5] = { 0x40, 0x48, 0x50, 0x58, 0x60 };
 			regs.PC = vector_addresses[i];
 
-			return 20;
+			return 5;
 
 		}
 	}

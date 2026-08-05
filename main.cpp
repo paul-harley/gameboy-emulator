@@ -17,8 +17,8 @@ int main() {
 
 
 	//my_cpu.bus.load_rom("roms/tests/cpu_instrs/cpu_instrs.gb");
-    gb.load_rom("roms/tests/cpu_instrs/individual/" + rom_names[1]);
-    bool ls = true;
+    gb.load_rom("roms/tests/cpu_instrs/individual/" + rom_names[10]);
+    bool ls = false;
     gb.run(ls);
 	return 0;
 }

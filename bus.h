@@ -8,6 +8,7 @@
 #include "types.h"
 #include "ppu.h"
 #include "interrupts.h"
+#include "timer.h"
 
 
 struct MemoryRegion{	
@@ -51,13 +52,19 @@ private:
 	MemoryRegion* get_correct_memory(word address);
 
 	word fix_echo_address(word address);
-	Interrupts interrupts;
 
 
 
 public:
 
-	Bus(Interrupts& interrupts) : interrupts(interrupts) {}
+	Interrupts& interrupts;
+	Timer& timer;
+	Bus(Interrupts& interrupts, Timer& timer) : 
+		interrupts(interrupts),
+		ppu(interrupts),
+		timer(timer)
+	{}
+
 	PPU ppu;
 
 

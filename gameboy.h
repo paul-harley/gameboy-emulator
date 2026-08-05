@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include "bus.h"
 #include "interrupts.h"
+#include "timer.h"
 #include <fstream>
 #include <iomanip>
 
@@ -15,10 +16,12 @@ public:
 	Interrupts interrupts;
 	Bus bus;      
 	CPU cpu;   
+	Timer timer;
 
 	Gameboy()
-		: bus(interrupts)
-		, cpu(bus, interrupts)
+		: bus(interrupts, timer)
+		, cpu(bus, interrupts, timer)
+		, timer(interrupts)
 		, log_file("log.txt")
 	{}
 

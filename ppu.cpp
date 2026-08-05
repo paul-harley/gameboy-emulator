@@ -10,7 +10,9 @@ void PPU::tick(int cycles)
 
         ly++;
 
-        if (ly == 154)
+        if (ly == 144)
+            interrupts.request(VBlank);
+        else if (ly == 154)
             ly = 0;
     }
 }

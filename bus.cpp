@@ -25,12 +25,22 @@ MemoryRegion* Bus::get_correct_memory(word address) {
 }
 
 
-uint8_t Bus::read_memory(word address) {
+byte Bus::read_memory(word address) {
 
 	switch (address) {
+	case 0xFF04:
+		return timer.DIV;
+	case 0xFF05:
+		return timer.TIMA;
+	case 0xFF06:
+		return timer.TMA;
+	case 0xFF07:
+		return timer.TAC;
+
+
 	case 0xFF44:
-		return 0x90; // just return this every time for now 
-		//return ppu.get_ly();
+		//return 0x90; // just return this every time for now 
+		return ppu.get_ly();
 	case 0xFF0F:
 		return interrupts.IF;
 	case 0xFFFF:
@@ -57,6 +67,20 @@ void Bus::write_memory(word address, byte data) {
 	}
 
 	switch (address) {
+	case 0xFF04:
+		timer.DIV = 0;
+		timer.reset_sys_counter();
+		return;
+	case 0xFF05:
+		timer.TIMA = data;
+		return;
+	case 0xFF06:
+		timer.TMA = data;
+		return;
+	case 0xFF07:
+		timer.TAC = data;
+		return;
+
 	case 0xFF0F:
 		interrupts.IF = data;
 		return;
