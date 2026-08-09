@@ -3,6 +3,11 @@
 
 byte CPU::ld(Reg8 save_loc, Reg8 reg_to_copy) {
 	set_Reg8(save_loc, get_Reg8(reg_to_copy));
+
+	if (save_loc == HL_LOC || reg_to_copy == HL_LOC) {
+		return 2;
+	}
+
 	return 1;
 }
 

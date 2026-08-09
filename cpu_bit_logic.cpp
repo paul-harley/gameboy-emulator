@@ -205,6 +205,10 @@ byte CPU::rl(Reg8 reg_to_rotate) {
 
 	regs.set_flags(z, 0, 0, new_c);
 
+	if (reg_to_rotate == HL_LOC) {
+		return 4;
+	}
+
 	return 2;
 }
 
@@ -228,6 +232,10 @@ byte CPU::rlc(Reg8 reg_to_rotate) {
 	set_Reg8(reg_to_rotate, new_val);
 
 	regs.set_flags(z, 0, 0, c);
+
+	if (reg_to_rotate == HL_LOC) {
+		return 4;
+	}
 
 	return 2;
 }
@@ -254,6 +262,10 @@ byte CPU::rr(Reg8 reg_to_rotate) {
 
 	regs.set_flags(z, 0, 0, new_c);
 
+	if (reg_to_rotate == HL_LOC) {
+		return 4;
+	}
+
 	return 2;
 
 }
@@ -277,6 +289,10 @@ byte CPU::rrc(Reg8 reg_to_rotate) {
 	set_Reg8(reg_to_rotate, new_val);
 
 	regs.set_flags(z, 0, 0, c);
+
+	if (reg_to_rotate == HL_LOC) {
+		return 4;
+	}
 
 	return 2;
 
@@ -303,6 +319,9 @@ byte CPU::sla(Reg8 reg_to_shift) {
 
 	regs.set_flags(z, 0, 0, c);
 
+	if (reg_to_shift == HL_LOC) {
+		return 4;
+	}
 	return 2;
 
 }
@@ -320,6 +339,10 @@ byte CPU::sra(Reg8 reg_to_shift) {
 
 	regs.set_flags(z, 0, 0, c);
 
+	if (reg_to_shift == HL_LOC) {
+		return 4;
+	}
+
 	return 2;
 
 }
@@ -336,6 +359,10 @@ byte CPU::srl(Reg8 reg_to_shift) {
 
 	regs.set_flags(z, 0, 0, c);
 
+	if (reg_to_shift == HL_LOC) {
+		return 4;
+	}
+
 	return 2;
 }
 
@@ -351,6 +378,10 @@ byte CPU::swap(Reg8 reg_to_shift) {
 	set_Reg8(reg_to_shift, new_val);
 
 	regs.set_flags(z, 0, 0, 0);
+
+	if (reg_to_shift == HL_LOC) {
+		return 4;
+	}
 
 	return 2;
 }

@@ -146,6 +146,7 @@
     <ClCompile Include="cpu_control_flow.cpp" />
     <ClCompile Include="cpu_loading.cpp" />
     <ClCompile Include="gameboy.cpp" />
+    <ClCompile Include="graphics.cpp" />
     <ClCompile Include="interrupts.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ppu.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="bus.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="gameboy.h" />
+    <ClInclude Include="graphics.h" />
     <ClInclude Include="interrupts.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="registers.h" />
