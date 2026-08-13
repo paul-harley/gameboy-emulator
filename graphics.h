@@ -15,7 +15,12 @@ public:
 
 	std::array<byte, 16> get_tile_data(byte index);
 	tile decode_tile(const std::array<byte, 16>& tile_data);
+	
 	byte LCDC;
+	// top left cords of visible background area
+	byte SCY;
+	byte SCX;
+
 	word get_tile_base_pointer();
 	word get_map_base_pointer();
 

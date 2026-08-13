@@ -59,10 +59,11 @@ public:
 
 	Interrupts& interrupts;
 	Timer& timer;
+
 	Bus(Interrupts& interrupts, Timer& timer) : 
 		interrupts(interrupts),
-		ppu(interrupts),
-		timer(timer)
+		timer(timer),
+		ppu(*this, interrupts)
 	{}
 
 	PPU ppu;
