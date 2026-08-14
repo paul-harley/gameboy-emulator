@@ -39,13 +39,21 @@ byte Bus::read_memory(word address) {
 
 
 	case 0xFF44:
-		//return 0x90; // just return this every time for now 
 		return ppu.get_ly();
+
+	case 0xFF47: 
+		return ppu.BGP;
+	case 0xFF48: 
+		return ppu.OBP0;
+	case 0xFF49: 
+		return ppu.OBP1;
+
 	case 0xFF0F:
 		return interrupts.IF;
 	case 0xFFFF:
 		return interrupts.IE;
-	};
+
+	}
 
 	address = fix_echo_address(address);
 
@@ -79,6 +87,16 @@ void Bus::write_memory(word address, byte data) {
 		return;
 	case 0xFF07:
 		timer.TAC = data;
+		return;
+
+	case 0xFF47:
+		ppu.set_palette(address, data);
+		return;
+	case 0xFF48:
+		ppu.set_palette(address, data);
+		return;
+	case 0xFF49:
+		ppu.set_palette(address, data);
 		return;
 
 	case 0xFF0F:

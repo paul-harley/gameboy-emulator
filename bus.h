@@ -12,7 +12,7 @@
 
 
 struct MemoryRegion{	
-	std::vector<uint8_t> memory;
+	std::vector<byte> memory;
 
 	word start_address;
 	word  end_address;

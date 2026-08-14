@@ -157,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bus.h" />
+    <ClInclude Include="colours.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="gameboy.h" />
     <ClInclude Include="interrupts.h" />

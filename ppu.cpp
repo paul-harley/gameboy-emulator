@@ -1,6 +1,19 @@
 #include "ppu.h"
 #include "bus.h" 
 
+PPU::PPU(Bus& bus, Interrupts& interrupts) : bus(bus), interrupts(interrupts) {
+
+	//	Init Display
+	SDL_Init(SDL_INIT_VIDEO);
+
+	window = SDL_CreateWindow("Main", WINDOW_WIDTH * SCALE, WINDOW_HEIGHT * SCALE, 0);
+	renderer = SDL_CreateRenderer(window, NULL);
+
+	LCDC = 0;
+	SCY = 0;
+	SCX = 0;
+}
+
 
 void PPU::tick(int cycles)
 {
@@ -85,6 +98,32 @@ word PPU::get_map_base_pointer() {
 	return 0x9800;
 }
 
+void PPU::set_palette(word palette_reg, byte new_vals) {
+	Palette* p;
+
+	switch (palette_reg) {
+	case 0xFF47: 
+		p = &bg_palette;
+		BGP = new_vals;
+		break;
+	case 0xFF48: 
+		p = &obj0_palette; 
+		OBP0 = new_vals;
+		break;
+	case 0xFF49: 
+		p = &obj1_palette; 
+		OBP1 = new_vals;
+		break;
+	default: p = &bg_palette; break;
+	}
+
+	p->colour0 = p->get_shade(new_vals & 0x3);
+	p->colour1 = p->get_shade((new_vals>>2) & 0x3);
+	p->colour2 = p->get_shade((new_vals>>4) & 0x3);
+	p->colour3 = p->get_shade((new_vals>>6) & 0x3);
+
+}
+
 void PPU::create_background() {
 
 	word map_bp = get_map_base_pointer();
@@ -95,10 +134,10 @@ void PPU::create_background() {
 		if (tile_is_visible(row, col)) {
 			byte tile_id = bus.read_memory(map_bp + i);
 			tile current_tile = decode_tile(get_tile_data(tile_id));
-			t_map[row][col] = current_tile;
+			t_map.at(row, col) = current_tile;
 		}
 		else {
-			t_map[row][col] = std::nullopt;
+			t_map.at(row, col) = std::nullopt;
 		}
 
 	}
@@ -108,22 +147,32 @@ void PPU::set_rend_col(colour col) {
 	SDL_SetRenderDrawColor(renderer, get<0>(col), get<1>(col), get<2>(col), get<3>(col));
 }
 
-void PPU::draw_background() {
-
+void PPU::draw_tilemap() {
 	// clear 
-	set_rend_col(palette.colour1);
+	set_rend_col(bg_palette.colour0);
 	SDL_RenderClear(renderer);
 
-	// draw everywhere a pixel should be
-	set_rend_col(palette.colour1);
-	for (uint8_t x = 0; x < WINDOW_WIDTH; x++) {
-		for (uint8_t y = 0; y < WINDOW_HEIGHT; y++) {
-			if (display[x + y * WINDOW_WIDTH] == 1) {
+	for (int screen_y = 0; screen_y < WINDOW_HEIGHT; screen_y++) {
+		for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
 
-				SDL_FRect square = { x * SCALE, y * SCALE, SCALE, SCALE };
-				SDL_RenderFillRect(renderer, &square);
+			byte bg_x = (SCX + screen_x); // byte will wrap around 256 anyway which is total tile map size
+			byte bg_y = (SCY + screen_y);
 
+			byte tile_col = bg_x / 8;
+			byte tile_row = bg_y / 8;
+
+			if (!t_map.at(tile_row, tile_col).has_value()) {
+				continue;
 			}
+
+			byte px_x = bg_x % 8;
+			byte px_y = bg_y % 8;
+
+			// drawing
+			byte color_index = t_map.at(tile_row, tile_col).value()[px_y][px_x];
+			set_rend_col(bg_palette.get_current_colour(color_index));
+			SDL_FRect square = { screen_x * SCALE, screen_y * SCALE, SCALE, SCALE };
+			SDL_RenderFillRect(renderer, &square);
 		}
 	}
 
