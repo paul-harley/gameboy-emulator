@@ -67,6 +67,8 @@ public:
 	std::array<byte, 16> get_tile_data(byte index);
 	tile decode_tile(const std::array<byte, 16>& tile_data);
 
+	byte LYC;
+	byte STAT;
 	byte LCDC;
 	byte SCY; // top left cords of visible background area
 	byte SCX;
@@ -101,5 +103,7 @@ private:
 	Tile_Map t_map;
 
 	bool tile_is_visible(byte tile_row, byte tile_col); //check this thing if visuals look weird
+
+	void check_lyc();
 };
 

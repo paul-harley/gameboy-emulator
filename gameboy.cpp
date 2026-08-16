@@ -6,12 +6,24 @@ void Gameboy::load_rom(const std::string& path) {
 }
 
 void Gameboy::run(bool ls) {
-	long long count = 0;
-	const long long max_instructions = 7500000;
+	//long long count = 0;
+	//const long long max_instructions = 7500000;
+
+    bool running = true;
+    SDL_Event event;
+
+    static int frame_count = 0;
 
 
 
-	while (count < max_instructions) {
+	while (running) {
+
+        // handle events
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_EVENT_QUIT)
+                running = false;
+        }
 
         if (ls) log_state();
 
@@ -47,7 +59,20 @@ void Gameboy::run(bool ls) {
         bus.ppu.tick(t_cycles);
         timer.tick(t_cycles);
 
-		count++;
+		//count++;
+
+        static byte last_ly = 0;
+        byte current_ly = bus.ppu.get_ly();
+
+        if (current_ly == 144 && last_ly != 144) { // just entered VBlank
+            frame_count++;
+
+            if (frame_count > 0) {
+                bus.ppu.create_background(); // rebuild tile decode / visibility
+                bus.ppu.draw_tilemap();      // actually render this frame
+            }
+        }
+        last_ly = current_ly;
 	}
 
     if (ls) {

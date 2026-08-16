@@ -37,9 +37,18 @@ byte Bus::read_memory(word address) {
 	case 0xFF07:
 		return timer.TAC;
 
-
+	case 0xFF40:
+		return ppu.LCDC;
+	case 0xFF41: 
+		return ppu.STAT;
+	case 0xFF42:
+		return ppu.SCY;
+	case 0xFF43:
+		return ppu.SCX;
 	case 0xFF44:
 		return ppu.get_ly();
+	case 0xFF45: 
+		return ppu.LYC;
 
 	case 0xFF47: 
 		return ppu.BGP;
@@ -87,6 +96,26 @@ void Bus::write_memory(word address, byte data) {
 		return;
 	case 0xFF07:
 		timer.TAC = data;
+		return;
+
+	case 0xFF40:
+		std::cout << "LCDC written: " << std::hex << (int)data
+			<< " (bit4=" << ((data & 0x10) >> 4) << ")\n";
+
+		ppu.LCDC = data;
+		return;
+
+	case 0xFF41: 
+		ppu.STAT = (ppu.STAT & 0x07) | (data & 0xF8); //ensure bottom 3 bits are read only
+		return;
+	case 0xFF42:
+		ppu.SCY = data;
+		return;
+	case 0xFF43:
+		ppu.SCX = data;
+		return;
+	case 0xFF45: 
+		ppu.LYC = data; 
 		return;
 
 	case 0xFF47:
