@@ -39,21 +39,6 @@ struct Palette {
 
 };
 
-struct Tile_Map {
-	std::array<std::array<std::optional<tile>, 32>, 32> tiles;
-
-	std::optional<tile>& at(byte row, byte col) {
-		return tiles[row][col];
-	}
-
-	void clear() {
-		for (auto& row : tiles)
-			for (auto& cell : row)
-				cell = std::nullopt;
-	}
-
-};
-
 
 class PPU {
 public:
@@ -80,8 +65,6 @@ public:
 	word get_map_base_pointer();
 
 	void set_palette(word palette_reg, byte new_vals);
-	void create_background();
-
 
 	SDL_Window* window;
 	SDL_Renderer* renderer;
@@ -89,7 +72,7 @@ public:
 	static constexpr byte WINDOW_HEIGHT = 144;
 	std::array<byte, WINDOW_WIDTH* WINDOW_HEIGHT > display;	
 	void set_rend_col(colour col);
-	void draw_tilemap();
+	void render_row(byte ly);
 
 
 private:
@@ -99,8 +82,6 @@ private:
 	Palette bg_palette;
 	Palette obj0_palette;
 	Palette obj1_palette;
-
-	Tile_Map t_map;
 
 	bool tile_is_visible(byte tile_row, byte tile_col); //check this thing if visuals look weird
 

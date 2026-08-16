@@ -25,9 +25,14 @@ void PPU::tick(int cycles)
 
         ly++;
 		check_lyc();
+		if (ly < 144) {
+			render_row(ly);
+		}
 
-        if (ly == 144)
-            interrupts.request(VBlank);
+		if (ly == 144) {
+			interrupts.request(VBlank);
+			SDL_RenderPresent(renderer);
+		}
         else if (ly == 154)
             ly = 0;
     }
@@ -51,10 +56,6 @@ std::array<byte, 16> PPU::get_tile_data(byte index) {
 	else {
 		sbyte signed_index = static_cast<sbyte>(index);
 		tile_address = tile_bp + (signed_index * 16);
-
-		if (index != 0) {
-			std::cout << "LETS SEE\n";
-		}
 	}
 
 
@@ -129,82 +130,42 @@ void PPU::set_palette(word palette_reg, byte new_vals) {
 
 }
 
-void PPU::create_background() {
-
-	word map_bp = get_map_base_pointer();
-
-
-	if (get_tile_base_pointer() == 0x9000) {
-		std::cout << "LCDC=" << std::hex << (int)LCDC
-			<< " MAP=" << map_bp
-			<< " TILEBP=" << get_tile_base_pointer()
-			<< " SCX=" << (int)SCX
-			<< " SCY=" << (int)SCY
-			<< '\n';
-	}
-
-	for (word i = 0; i < 1024; i++) {
-		byte row = i / 32;
-		byte col = i % 32;
-
-		if (tile_is_visible(row, col)) {
-			byte tile_id = bus.read_memory(map_bp + i);
-
-			if (tile_id != 0 && get_tile_base_pointer() == 0x9000) {
-				std::cout << "i=" << std::hex << i
-					<< " row=" << (int)row
-					<< " col=" << (int)col
-					<< " map_addr=" << map_bp + i
-					<< " tile_id=" << (int)tile_id
-					<< '\n';
-			}
-
-
-
-			tile current_tile = decode_tile(get_tile_data(tile_id));
-			t_map.at(row, col) = current_tile;
-		}
-		else {
-			t_map.at(row, col) = std::nullopt;
-		}
-
-	}
-}
-
 void PPU::set_rend_col(colour col) {
 	SDL_SetRenderDrawColor(renderer, get<0>(col), get<1>(col), get<2>(col), get<3>(col));
 }
 
-void PPU::draw_tilemap() {
-	// clear 
-	set_rend_col(bg_palette.colour0);
-	SDL_RenderClear(renderer);
+void PPU::render_row(byte ly) {
 
-	for (int screen_y = 0; screen_y < WINDOW_HEIGHT; screen_y++) {
-		for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
+	// make sure im checking lcdc every row i need it
+	word map_bp = get_map_base_pointer(); 
+	word tile_bp = get_tile_base_pointer();
 
-			byte bg_x = (SCX + screen_x); // byte will wrap around 256 anyway which is total tile map size
-			byte bg_y = (SCY + screen_y);
+	byte bg_y = SCY + ly;
+	byte tile_row = bg_y / 8;
+	byte px_y = bg_y % 8;
 
-			byte tile_col = bg_x / 8;
-			byte tile_row = bg_y / 8;
 
-			if (!t_map.at(tile_row, tile_col).has_value()) {
-				continue;
-			}
+	for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
 
-			byte px_x = bg_x % 8;
-			byte px_y = bg_y % 8;
+		byte bg_x = (SCX + screen_x); // byte will wrap around 256 anyway which is total tile map size
+		byte tile_col = bg_x / 8;
+		byte px_x = bg_x % 8;
 
-			// drawing
-			byte color_index = t_map.at(tile_row, tile_col).value()[px_y][px_x];
-			set_rend_col(bg_palette.get_current_colour(color_index));
-			SDL_FRect square = { screen_x * SCALE, screen_y * SCALE, SCALE, SCALE };
-			SDL_RenderFillRect(renderer, &square);
-		}
+		word map_offset = tile_row * 32 + tile_col;
+		byte tile_id = bus.read_memory(map_bp + map_offset);
+
+		std::array<byte, 16> tile_data = get_tile_data(tile_id);
+		tile decoded = decode_tile(tile_data);
+
+
+
+		// drawing
+		byte color_index = decoded[px_y][px_x];
+		set_rend_col(bg_palette.get_current_colour(color_index));
+		SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
+		SDL_RenderFillRect(renderer, &square);
 	}
 
-	SDL_RenderPresent(renderer);
 }
 
 

@@ -99,12 +99,8 @@ void Bus::write_memory(word address, byte data) {
 		return;
 
 	case 0xFF40:
-		std::cout << "LCDC written: " << std::hex << (int)data
-			<< " (bit4=" << ((data & 0x10) >> 4) << ")\n";
-
 		ppu.LCDC = data;
 		return;
-
 	case 0xFF41: 
 		ppu.STAT = (ppu.STAT & 0x07) | (data & 0xF8); //ensure bottom 3 bits are read only
 		return;

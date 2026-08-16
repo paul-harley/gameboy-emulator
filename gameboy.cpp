@@ -60,19 +60,6 @@ void Gameboy::run(bool ls) {
         timer.tick(t_cycles);
 
 		//count++;
-
-        static byte last_ly = 0;
-        byte current_ly = bus.ppu.get_ly();
-
-        if (current_ly == 144 && last_ly != 144) { // just entered VBlank
-            frame_count++;
-
-            if (frame_count > 0) {
-                bus.ppu.create_background(); // rebuild tile decode / visibility
-                bus.ppu.draw_tilemap();      // actually render this frame
-            }
-        }
-        last_ly = current_ly;
 	}
 
     if (ls) {
