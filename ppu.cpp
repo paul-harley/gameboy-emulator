@@ -9,9 +9,6 @@ PPU::PPU(Bus& bus, Interrupts& interrupts) : bus(bus), interrupts(interrupts) {
 	window = SDL_CreateWindow("Main", WINDOW_WIDTH * SCALE, WINDOW_HEIGHT * SCALE, 0);
 	renderer = SDL_CreateRenderer(window, NULL);
 
-	LCDC = 0;
-	SCY = 0;
-	SCX = 0;
 }
 
 
@@ -19,23 +16,27 @@ void PPU::tick(int cycles)
 {
     dot_counter += cycles;
 
-    while (dot_counter >= 456)
-    {
-        dot_counter -= 456;
+	while (dot_counter >= 456)
+	{
+		dot_counter -= 456;
 
-        ly++;
+		ly++;
 		check_lyc();
 		if (ly < 144) {
-			render_row(ly);
+			render_row_bg(ly);
+			render_row_win(ly);
 		}
 
 		if (ly == 144) {
 			interrupts.request(VBlank);
 			SDL_RenderPresent(renderer);
 		}
-        else if (ly == 154)
-            ly = 0;
-    }
+		else if (ly == 154) {
+			ly = 0;
+			window_line_counter = 0;
+		}
+
+	}
 }
 
 byte PPU::get_ly() {
@@ -96,9 +97,16 @@ word PPU::get_tile_base_pointer() {
 	return 0x9000;
 }
 
-word PPU::get_map_base_pointer() {
+word PPU::get_map_base_pointer_bg() {
 
 	if ((LCDC & 0x8) >> 3) {
+		return  0x9C00;
+	}
+	return 0x9800;
+}
+
+word PPU::get_map_base_pointer_win() {
+	if ((LCDC & 0x40) >> 6) {
 		return  0x9C00;
 	}
 	return 0x9800;
@@ -134,10 +142,10 @@ void PPU::set_rend_col(colour col) {
 	SDL_SetRenderDrawColor(renderer, get<0>(col), get<1>(col), get<2>(col), get<3>(col));
 }
 
-void PPU::render_row(byte ly) {
+void PPU::render_row_bg(byte ly) {
 
 	// make sure im checking lcdc every row i need it
-	word map_bp = get_map_base_pointer(); 
+	word map_bp = get_map_base_pointer_bg(); 
 	word tile_bp = get_tile_base_pointer();
 
 	byte bg_y = SCY + ly;
@@ -169,45 +177,73 @@ void PPU::render_row(byte ly) {
 }
 
 
-bool PPU::tile_is_visible(byte tile_row, byte tile_col) {
-	byte left = SCX;
-	byte right = (left + 159) % 256;
-	byte top = SCY;
-	byte bottom = (top + 143) % 256;
+void PPU::render_row_win(byte ly) {
 
-	byte tile_left = tile_col * 8;
-	byte tile_right = tile_left + 7;
-	byte tile_top = tile_row * 8;
-	byte tile_bottom = tile_top + 7;
+	if (!can_draw_window(ly)) return;
+
+	// make sure im checking lcdc every row i need it
+	word map_bp = get_map_base_pointer_win();
+	word tile_bp = get_tile_base_pointer();
+
+	byte tile_row = window_line_counter / 8;
+	byte px_y = window_line_counter % 8;
 
 
-	//no horizontal wrapping
-	if (left < right) {
-		if (tile_right < left || tile_left > right) {
-			return false;
+	for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
+
+		sword win_x = screen_x - (WX - 7);
+		if (win_x < 0) continue; // this screen column is before the window starts
+
+		byte tile_col = win_x / 8;
+		byte px_x = win_x % 8;
+
+
+
+		word map_offset = tile_row * 32 + tile_col;
+		byte tile_id = bus.read_memory(map_bp + map_offset);
+
+		std::array<byte, 16> tile_data = get_tile_data(tile_id);
+		tile decoded = decode_tile(tile_data);
+
+		// drawing
+		byte color_index = decoded[px_y][px_x];
+		set_rend_col(bg_palette.get_current_colour(color_index));
+		SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
+		SDL_RenderFillRect(renderer, &square);
+	}
+
+	window_line_counter++; 
+}
+
+
+void PPU::render_row_sprites(byte ly){
+	if (!(LCDC & 0x02)) return;
+
+	byte sprite_height = 8;
+	if ((LCDC & 0x04)) {
+		sprite_height = 16;
+	}
+
+	std::vector<byte> visible_sprites;
+
+	for (byte offset = 0; offset < 40; offset++) {
+		word oam_address = 0xFE00 + (offset * 4);
+		
+		//the 16 is cause of a weird way y is stored
+		byte sprite_y = bus.read_memory(oam_address) - 16;
+		
+		if (ly >= sprite_y && ly <= sprite_y + sprite_height) {
+			visible_sprites.push_back(offset);
+			if (visible_sprites.size() == 10) break;
 		}
 	}
-	// h wrapped
-	else {
-		if (tile_left > right && tile_right < left) {
-			return false;
-		}
-	}
 
-	// no vertical wrapping
-	if (bottom > top) {
-		if (tile_bottom < top || tile_top > bottom) {
-			return false;
-		}
-	}
-	// v wrapped 
-	else {
-		if (tile_top > bottom && tile_bottom < top) {
-			return false;
-		}
 
-	}
-	return true;
+	//TODO: draw the sprites chosen above,
+	// look into the idea of ordering and byte 3 in general of oam per sprite
+
+
+
 }
 
 
@@ -226,4 +262,12 @@ void PPU::check_lyc() {
 		interrupts.request(STAT_i);
 	}
 
+}
+
+bool PPU::can_draw_window(byte ly) {
+	if ((LCDC & 0x20) == 0) return false;
+	if (ly < WY)  return false;
+	if (WX > 166) return false;
+
+	return true;
 }

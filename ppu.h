@@ -52,17 +52,23 @@ public:
 	std::array<byte, 16> get_tile_data(byte index);
 	tile decode_tile(const std::array<byte, 16>& tile_data);
 
-	byte LYC;
-	byte STAT;
-	byte LCDC;
-	byte SCY; // top left cords of visible background area
-	byte SCX;
-	byte BGP;
-	byte OBP0;
-	byte OBP1;
+	byte LYC = 0;
+	byte STAT = 0;
+
+	byte LCDC = 0;
+
+	byte SCY = 0; // top left cords of visible background area
+	byte SCX = 0;
+	byte WX = 0;
+	byte WY = 0;
+
+	byte BGP = 0;
+	byte OBP0 = 0;
+	byte OBP1 = 0;
 
 	word get_tile_base_pointer();
-	word get_map_base_pointer();
+	word get_map_base_pointer_bg();
+	word get_map_base_pointer_win();
 
 	void set_palette(word palette_reg, byte new_vals);
 
@@ -72,19 +78,22 @@ public:
 	static constexpr byte WINDOW_HEIGHT = 144;
 	std::array<byte, WINDOW_WIDTH* WINDOW_HEIGHT > display;	
 	void set_rend_col(colour col);
-	void render_row(byte ly);
+	void render_row_bg(byte ly);
+	void render_row_win(byte ly);
+	void render_row_sprites(byte ly);
 
 
 private:
     byte ly = 0;
     int dot_counter = 0;
+	byte window_line_counter = 0;
+
 	byte SCALE = 5;
 	Palette bg_palette;
 	Palette obj0_palette;
 	Palette obj1_palette;
 
-	bool tile_is_visible(byte tile_row, byte tile_col); //check this thing if visuals look weird
-
 	void check_lyc();
+	bool can_draw_window(byte ly);
 };
 

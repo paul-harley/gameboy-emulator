@@ -57,6 +57,11 @@ byte Bus::read_memory(word address) {
 	case 0xFF49: 
 		return ppu.OBP1;
 
+	case 0xFF4A:
+		return ppu.WY;
+	case 0xFF4B:
+		return ppu.WX;
+
 	case 0xFF0F:
 		return interrupts.IF;
 	case 0xFFFF:
@@ -73,7 +78,6 @@ byte Bus::read_memory(word address) {
 	return mem_region->memory[local_address];
 	return 0;
 }
-
 
 
 void Bus::write_memory(word address, byte data) {
@@ -122,6 +126,13 @@ void Bus::write_memory(word address, byte data) {
 		return;
 	case 0xFF49:
 		ppu.set_palette(address, data);
+		return;
+
+	case 0xFF4A:
+		ppu.WY = data;
+		return;
+	case 0xFF4B:
+		ppu.WX = data;
 		return;
 
 	case 0xFF0F:
