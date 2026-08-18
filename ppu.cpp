@@ -20,12 +20,15 @@ void PPU::tick(int cycles)
 	{
 		dot_counter -= 456;
 
-		ly++;
-		check_lyc();
+		// draw before incrementing, get weird lines otherwise
 		if (ly < 144) {
 			render_row_bg(ly);
 			render_row_win(ly);
+			render_row_sprites(ly);
 		}
+
+		ly++;
+		check_lyc();
 
 		if (ly == 144) {
 			interrupts.request(VBlank);
@@ -46,9 +49,14 @@ byte PPU::get_ly() {
 
 
 std::array<byte, 16> PPU::get_tile_data(byte index) {
-	std::array<byte, 16> tile_data{};
 
 	word tile_bp = get_tile_base_pointer();
+	return get_tile_data(tile_bp, index);
+}
+
+std::array<byte, 16> PPU::get_tile_data(word tile_bp, byte index) {
+	std::array<byte, 16> tile_data{};
+
 	word tile_address;
 
 	if (tile_bp == 0x8000) {
@@ -65,6 +73,7 @@ std::array<byte, 16> PPU::get_tile_data(byte index) {
 	}
 
 	return tile_data;
+
 }
 
 tile PPU::decode_tile(const std::array<byte, 16>& tile_data) {
@@ -144,6 +153,18 @@ void PPU::set_rend_col(colour col) {
 
 void PPU::render_row_bg(byte ly) {
 
+	if (!(LCDC & 0x01)) {
+		set_rend_col(bg_palette.colour0);
+		for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
+			bg_window_color[ly][screen_x] = 0;
+			SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
+			SDL_RenderFillRect(renderer, &square);
+		}
+		return;
+	}
+
+
+
 	// make sure im checking lcdc every row i need it
 	word map_bp = get_map_base_pointer_bg(); 
 	word tile_bp = get_tile_base_pointer();
@@ -169,6 +190,7 @@ void PPU::render_row_bg(byte ly) {
 
 		// drawing
 		byte color_index = decoded[px_y][px_x];
+		bg_window_color[ly][screen_x] = color_index;
 		set_rend_col(bg_palette.get_current_colour(color_index));
 		SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
 		SDL_RenderFillRect(renderer, &square);
@@ -180,6 +202,7 @@ void PPU::render_row_bg(byte ly) {
 void PPU::render_row_win(byte ly) {
 
 	if (!can_draw_window(ly)) return;
+
 
 	// make sure im checking lcdc every row i need it
 	word map_bp = get_map_base_pointer_win();
@@ -207,6 +230,7 @@ void PPU::render_row_win(byte ly) {
 
 		// drawing
 		byte color_index = decoded[px_y][px_x];
+		bg_window_color[ly][screen_x] = color_index;
 		set_rend_col(bg_palette.get_current_colour(color_index));
 		SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
 		SDL_RenderFillRect(renderer, &square);
@@ -224,7 +248,7 @@ void PPU::render_row_sprites(byte ly){
 		sprite_height = 16;
 	}
 
-	std::vector<byte> visible_sprites;
+	std::vector<word> visible_sprites_add;
 
 	for (byte offset = 0; offset < 40; offset++) {
 		word oam_address = 0xFE00 + (offset * 4);
@@ -232,20 +256,105 @@ void PPU::render_row_sprites(byte ly){
 		//the 16 is cause of a weird way y is stored
 		byte sprite_y = bus.read_memory(oam_address) - 16;
 		
-		if (ly >= sprite_y && ly <= sprite_y + sprite_height) {
-			visible_sprites.push_back(offset);
-			if (visible_sprites.size() == 10) break;
+		if (ly >= sprite_y && ly < sprite_y + sprite_height) {
+			visible_sprites_add.push_back(oam_address);
+			if (visible_sprites_add.size() == 10) break;
 		}
 	}
 
+	sort_sprites_x(visible_sprites_add);
+	byte sprites_to_draw = visible_sprites_add.size();
 
-	//TODO: draw the sprites chosen above,
-	// look into the idea of ordering and byte 3 in general of oam per sprite
+	for (sbyte i = sprites_to_draw -1; i >= 0; i--) {
 
+		byte y_pos = bus.read_memory(visible_sprites_add.at(i));
+		byte x_pos = bus.read_memory(visible_sprites_add.at(i) + 1);
+		byte tile_index = bus.read_memory(visible_sprites_add.at(i) + 2);
+		byte attributes = bus.read_memory(visible_sprites_add.at(i) + 3);
+
+		draw_sprite(ly, y_pos, x_pos, tile_index, attributes, sprite_height);
+
+	}
 
 
 }
 
+
+void PPU::sort_sprites_x(std::vector<word>& sprites){
+	for (size_t i = 0; i < sprites.size(); i++) {
+		for (size_t j = 0; j < sprites.size() - i - 1; j++) {
+
+			byte x_a = bus.read_memory(sprites[j] + 1);
+			byte x_b = bus.read_memory(sprites[j + 1] + 1);
+
+			if (x_a > x_b) {
+				std::swap(sprites[j], sprites[j + 1]);
+			}
+		}
+	}
+}
+
+void PPU::draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte attributes, byte height) {
+
+	sword screen_y = y_pos - 16;
+	sword screen_x = x_pos - 8;
+
+	if (screen_y >= 144 || screen_y + height <= 0) return;
+	if (screen_x >= 160 || screen_x + 8 <= 0) return;
+
+	sbyte row_in_sprite = ly - screen_y; 
+
+	// Y flip across whole sprite
+	if (attributes & 0x40) {
+		row_in_sprite = (height - 1) - row_in_sprite;
+	}
+
+	byte tile_id;
+	byte row_in_tile;
+
+	if (height == 16) {
+		if (row_in_sprite < 8) {
+			tile_id = tile_index & 0xFE; // top tile
+			row_in_tile = row_in_sprite;
+		}
+		else {
+			tile_id = tile_index | 0x01; // bottom tile
+			row_in_tile = row_in_sprite - 8;
+		}
+	}
+	else {
+		tile_id = tile_index;
+		row_in_tile = row_in_sprite;
+	}
+
+	tile decoded = decode_tile(get_tile_data(0x8000, tile_id));
+
+	for (byte pixel_x = 0; pixel_x < 8; pixel_x++) {
+
+		sword draw_x = screen_x + pixel_x;
+		if (draw_x < 0 || draw_x >= 160) continue;
+
+		int sprite_x = pixel_x;
+		if (attributes & 0x20) {
+			sprite_x = 7 - sprite_x; // X flip
+		}
+
+		byte color_index = decoded[row_in_tile][sprite_x];
+
+		if (color_index == 0) continue; // sprite-transparent
+		if ((attributes & 0x80) && bg_window_color[ly][draw_x] != 0) continue; // bg priority
+
+		if (attributes & 0x10) {
+			set_rend_col(obj1_palette.get_current_colour(color_index));
+		}
+		else {
+			set_rend_col(obj0_palette.get_current_colour(color_index));
+		}
+
+		SDL_FRect square = { draw_x * SCALE, ly * SCALE, SCALE, SCALE };
+		SDL_RenderFillRect(renderer, &square);
+	}
+}
 
 void PPU::check_lyc() {
 	bool coincidence = (ly == LYC);

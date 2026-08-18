@@ -2,6 +2,7 @@
 #include <optional>
 #include <tuple>
 #include <SDL3/SDL.h>
+#include <vector>
 
 #include "interrupts.h"
 #include "types.h"
@@ -50,6 +51,7 @@ public:
     Interrupts& interrupts;
 
 	std::array<byte, 16> get_tile_data(byte index);
+	std::array<byte, 16> get_tile_data(word tile_base_pointer, byte index);
 	tile decode_tile(const std::array<byte, 16>& tile_data);
 
 	byte LYC = 0;
@@ -81,6 +83,7 @@ public:
 	void render_row_bg(byte ly);
 	void render_row_win(byte ly);
 	void render_row_sprites(byte ly);
+	void draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte attributes, byte height);
 
 
 private:
@@ -95,5 +98,8 @@ private:
 
 	void check_lyc();
 	bool can_draw_window(byte ly);
+
+	void sort_sprites_x(std::vector<word>& sprites);
+	std::array<std::array<byte, 160>, 144> bg_window_color;
 };
 
