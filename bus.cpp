@@ -28,6 +28,9 @@ MemoryRegion* Bus::get_correct_memory(word address) {
 byte Bus::read_memory(word address) {
 
 	switch (address) {
+	case 0xFF00:
+		return joypad.read();
+
 	case 0xFF04:
 		return timer.DIV;
 	case 0xFF05:
@@ -88,6 +91,10 @@ void Bus::write_memory(word address, byte data) {
 	}
 
 	switch (address) {
+	case 0xFF00:
+		joypad.write(data);
+		return;
+
 	case 0xFF04:
 		timer.DIV = 0;
 		timer.reset_sys_counter();

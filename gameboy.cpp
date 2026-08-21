@@ -6,8 +6,6 @@ void Gameboy::load_rom(const std::string& path) {
 }
 
 void Gameboy::run(bool ls) {
-	//long long count = 0;
-	//const long long max_instructions = 7500000;
 
     bool running = true;
     SDL_Event event;
@@ -23,6 +21,26 @@ void Gameboy::run(bool ls) {
         {
             if (event.type == SDL_EVENT_QUIT)
                 running = false;
+
+            if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
+                if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
+                        interrupts.request(Joypad_i);
+                }
+
+                bool pressed = (event.type == SDL_EVENT_KEY_DOWN);
+
+                switch (event.key.key) {
+                case SDLK_UP:    joypad.up = pressed; break;
+                case SDLK_DOWN:  joypad.down = pressed; break;
+                case SDLK_LEFT:  joypad.left = pressed; break;
+                case SDLK_RIGHT: joypad.right = pressed; break;
+                case SDLK_Z:     joypad.a = pressed; break;
+                case SDLK_X:     joypad.b = pressed; break;
+                case SDLK_RETURN: joypad.start = pressed; break;
+                case SDLK_BACKSPACE: joypad.select = pressed; break;
+                }
+            }
+
         }
 
         if (ls) log_state();

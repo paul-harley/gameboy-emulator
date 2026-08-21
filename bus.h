@@ -9,6 +9,7 @@
 #include "ppu.h"
 #include "interrupts.h"
 #include "timer.h"
+#include "joypad.h"
 
 
 struct MemoryRegion{	
@@ -57,10 +58,12 @@ private:
 
 public:
 
+	Joypad& joypad;
 	Interrupts& interrupts;
 	Timer& timer;
 
-	Bus(Interrupts& interrupts, Timer& timer) : 
+	Bus(Joypad& joypad, Interrupts& interrupts, Timer& timer) : 
+		joypad(joypad),
 		interrupts(interrupts),
 		timer(timer),
 		ppu(*this, interrupts)

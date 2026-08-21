@@ -150,6 +150,7 @@
     <ClCompile Include="cpu_loading.cpp" />
     <ClCompile Include="gameboy.cpp" />
     <ClCompile Include="interrupts.cpp" />
+    <ClCompile Include="joypad.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ppu.cpp" />
     <ClCompile Include="registers.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="cpu.h" />
     <ClInclude Include="gameboy.h" />
     <ClInclude Include="interrupts.h" />
+    <ClInclude Include="joypad.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="registers.h" />
     <ClInclude Include="timer.h" />

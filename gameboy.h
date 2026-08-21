@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cpu.h"
+#include "joypad.h"
 #include "bus.h"
 #include "interrupts.h"
 #include "timer.h"
@@ -14,12 +15,13 @@ class Gameboy {
 
 public:
 	Interrupts interrupts;
+	Joypad joypad;
 	Bus bus;      
 	CPU cpu;   
 	Timer timer;
 
 	Gameboy()
-		: bus(interrupts, timer)
+		: bus(joypad, interrupts, timer)
 		, cpu(bus, interrupts, timer)
 		, timer(interrupts)
 		, log_file("log.txt")
