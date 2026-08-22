@@ -7,6 +7,8 @@ void Gameboy::load_rom(const std::string& path) {
 
 void Gameboy::run(bool ls) {
 
+    long long count = 0;
+
     bool running = true;
     SDL_Event event;
 
@@ -55,6 +57,8 @@ void Gameboy::run(bool ls) {
             }
         }
         else {
+            cpu.bus.last_pc = cpu.regs.PC;
+
 
             byte instruction = cpu.fetch();
 
@@ -77,7 +81,8 @@ void Gameboy::run(bool ls) {
         bus.ppu.tick(t_cycles);
         timer.tick(t_cycles);
 
-		//count++;
+		count++;
+
 	}
 
     if (ls) {

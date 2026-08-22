@@ -27,9 +27,23 @@ MemoryRegion* Bus::get_correct_memory(word address) {
 
 byte Bus::read_memory(word address) {
 
+	if (address >= 0xFEA0 && address <= 0xFEFF) {
+		return 0;
+	}
+
+
 	switch (address) {
 	case 0xFF00:
-		return joypad.read();
+	{
+		byte value = joypad.read();
+		return value;
+	}
+
+	case 0xFF01:
+		return serial_data;
+
+	case 0xFF02:
+		return serial_control;
 
 	case 0xFF04:
 		return timer.DIV;
@@ -84,16 +98,36 @@ byte Bus::read_memory(word address) {
 
 
 void Bus::write_memory(word address, byte data) {
+	
+	if (address >= 0xFEA0 && address <= 0xFEFF) {
+		return;
+	}
+
 
 	if (address <= 0x7FFF) {
-		std::cout << "WARNING: write to ROM area! addr="
-			<< std::hex << address << " data=" << (int)data << std::endl;
+		//std::cout << "WARNING: write to ROM area! addr="
+		//	<< std::hex << address << " data=" << (int)data << std::endl;
+		return;
 	}
+
 
 	switch (address) {
 	case 0xFF00:
 		joypad.write(data);
 		return;
+
+	case 0xFF01:
+		serial_data = data;
+		break;
+
+	case 0xFF02:
+		serial_control = data;
+		if (data & 0x80) {
+			serial_data = 0xFF;
+			serial_control &= ~0x80;
+			interrupts.request(Serial_i);
+		}
+		break;
 
 	case 0xFF04:
 		timer.DIV = 0;
@@ -125,6 +159,15 @@ void Bus::write_memory(word address, byte data) {
 		ppu.LYC = data; 
 		return;
 
+	case 0xFF46: {
+		word source_base = data << 8;
+		for (byte i = 0; i < 0xA0; i++) {
+			byte value = read_memory(source_base + i);
+			write_memory(0xFE00 + i, value);
+		}
+		return;
+	}
+
 	case 0xFF47:
 		ppu.set_palette(address, data);
 		return;
@@ -153,15 +196,9 @@ void Bus::write_memory(word address, byte data) {
 
 	address = fix_echo_address(address);
 
-	if (address == 0xFF02) {
-		if (data & 0x80) {
-			std::cout << (char)read_memory(0xFF01);
-			data &= 0x7F; // clear transfer flag immediately - instant "transfer"
-		}
-	}
 
 	MemoryRegion* mem_region = get_correct_memory(address);
-	uint16_t local_address = address - mem_region->start_address;
+	word local_address = address - mem_region->start_address;
 	mem_region->memory[local_address] = data;
 
 }

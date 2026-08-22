@@ -6,7 +6,7 @@ enum Interrupt_Type {
     VBlank = 0, // bit 0, vector 0x40
     STAT_i = 1, // bit 1, vector 0x48
     Timer_i = 2, // bit 2, vector 0x50
-    Serial = 3, // bit 3, vector 0x58
+    Serial_i = 3, // bit 3, vector 0x58
     Joypad_i = 4  // bit 4, vector 0x60
 
 };

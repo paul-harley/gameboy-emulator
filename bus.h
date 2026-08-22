@@ -57,6 +57,7 @@ private:
 
 
 public:
+	word last_pc = 0;
 
 	Joypad& joypad;
 	Interrupts& interrupts;
@@ -71,6 +72,8 @@ public:
 
 	PPU ppu;
 
+	byte serial_data = 0x00;      // FF01
+	byte serial_control = 0x7E;  // FF02, reasonable DMG initial value
 
 	byte read_memory(word address);
 	void write_memory(word address, byte data);

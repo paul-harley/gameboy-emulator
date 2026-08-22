@@ -1,6 +1,8 @@
 #include "joypad.h"
+#include <iostream>
 
 byte Joypad::read() {
+
     byte result = select_bits | 0x0F; // all buttons released
 
     // dpad
