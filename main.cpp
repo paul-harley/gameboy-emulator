@@ -22,7 +22,7 @@ int main() {
 
 	Gameboy gb;
     gb.load_rom(tetris_name);
-    bool log = false;
+    bool log = true;
     gb.run(log);
 
 	return 0;

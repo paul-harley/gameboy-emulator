@@ -47,6 +47,11 @@ void Gameboy::run(bool ls) {
 
         if (ls) log_state();
 
+        if (cpu.ime_pending) {
+            cpu.ime = true;
+            cpu.ime_pending = false;
+        }
+
         byte cycles;
 
         if (cpu.halted) {
@@ -68,11 +73,6 @@ void Gameboy::run(bool ls) {
             }
 
             cycles = cpu.decode(instruction);
-        }
-
-        if (cpu.ime_pending) {
-            cpu.ime = true;
-            cpu.ime_pending = false;
         }
 
         cycles += cpu.interrupt_handler();

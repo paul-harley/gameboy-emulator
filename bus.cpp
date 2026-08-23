@@ -80,7 +80,7 @@ byte Bus::read_memory(word address) {
 		return ppu.WX;
 
 	case 0xFF0F:
-		return interrupts.IF;
+		return interrupts.IF | 0xE0;
 	case 0xFFFF:
 		return interrupts.IE;
 
@@ -186,7 +186,7 @@ void Bus::write_memory(word address, byte data) {
 		return;
 
 	case 0xFF0F:
-		interrupts.IF = data;
+		interrupts.IF = data & 0x1F;
 		return;
 	case 0xFFFF:
 		interrupts.IE = data;
