@@ -54,10 +54,11 @@ private:
 
 	word fix_echo_address(word address);
 
-
+	byte boot_rom[256];
 
 public:
 	word last_pc = 0;
+	byte* test_ram_override = nullptr;
 
 	Joypad& joypad;
 	Interrupts& interrupts;
@@ -72,12 +73,18 @@ public:
 
 	PPU ppu;
 
-	byte serial_data = 0x00;      // FF01
-	byte serial_control = 0x7E;  // FF02, reasonable DMG initial value
+	byte serial_data = 0xFF;      // FF01
+	byte serial_control = 0x7E;   // FF02
+	bool transfer_active = false;
+	int transfer_cycles_remaining = 0;
+	void serial_tick(int t_cycles);
+
 
 	byte read_memory(word address);
 	void write_memory(word address, byte data);
 	void dump_memory(word start_loc, byte num_bytes);
 	void load_rom(const std::string filename);
+	bool boot_rom_enabled = true;
+	void load_boot_rom(const std::string filename);
 
 };

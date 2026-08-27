@@ -323,7 +323,7 @@ byte CPU::decode_block_3(byte instruction) {
 	}
 
 	case 0x7: {
-		byte target_bits = (instruction & 0x18) >> 3;
+		byte target_bits = (instruction & 0x38) >> 3;
 		return rst(target_bits << 3); //multiply by 8
 	}
 

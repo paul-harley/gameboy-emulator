@@ -26,10 +26,17 @@ MemoryRegion* Bus::get_correct_memory(word address) {
 
 
 byte Bus::read_memory(word address) {
+	if (test_ram_override) return test_ram_override[address];
+
 
 	if (address >= 0xFEA0 && address <= 0xFEFF) {
 		return 0;
 	}
+
+	if (boot_rom_enabled && address <= 0x00FF) {
+		return boot_rom[address];
+	}
+
 
 
 	switch (address) {
@@ -98,10 +105,19 @@ byte Bus::read_memory(word address) {
 
 
 void Bus::write_memory(word address, byte data) {
+
+	if (test_ram_override) { test_ram_override[address] = data; return; }
+
 	
 	if (address >= 0xFEA0 && address <= 0xFEFF) {
 		return;
 	}
+
+	if (address == 0xFF50) {
+		boot_rom_enabled = false;
+		return;
+	}
+
 
 
 	if (address <= 0x7FFF) {
@@ -120,15 +136,14 @@ void Bus::write_memory(word address, byte data) {
 		serial_data = data;
 		break;
 
-	case 0xFF02:
+	case 0xFF02: {
 		serial_control = data;
-		if (data & 0x80) {
-			serial_data = 0xFF;
-			serial_control &= ~0x80;
-			interrupts.request(Serial_i);
+		if ((data & 0x80) && (data & 0x01)) { // start bit + internal clock only
+			transfer_active = true;
+			transfer_cycles_remaining = 4096; // 8 bits * 512 T-cycles/bit
 		}
-		break;
-
+		return;
+	}
 	case 0xFF04:
 		timer.DIV = 0;
 		timer.reset_sys_counter();
@@ -203,6 +218,19 @@ void Bus::write_memory(word address, byte data) {
 
 }
 
+void Bus::serial_tick(int t_cycles) {
+	if (!transfer_active) return;
+
+	transfer_cycles_remaining -= t_cycles;
+
+	if (transfer_cycles_remaining <= 0) {
+		transfer_active = false;
+		serial_data = 0xFF; // no link cable connected, so nothing comes back
+		serial_control &= ~0x80; // clear the start/active bit
+		interrupts.request(Serial_i);
+	}
+}
+
 
 void Bus::dump_memory(word start_loc, byte num_bytes) {
 
@@ -259,3 +287,28 @@ void Bus::load_rom(const std::string filename) {
 
 }
 
+
+
+void Bus::load_boot_rom(const std::string filename) {
+	std::ifstream rom(filename, std::ios::binary);
+
+	if (!rom) {
+		std::cout << "Boot ROM not found...\n";
+		boot_rom_enabled = false; // fail safe: fall back to skipping it
+		return;
+	}
+
+	byte current_byte = 0;
+	word address = 0;
+
+	while (rom.read(reinterpret_cast<char*>(&current_byte), 1)) {
+		if (address >= 256) {
+			std::cout << "Boot ROM too large\n";
+			break;
+		}
+		boot_rom[address] = current_byte;
+		address++;
+	}
+
+	boot_rom_enabled = true;
+}

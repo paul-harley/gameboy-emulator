@@ -3,7 +3,7 @@
 
 byte Joypad::read() {
 
-    byte result = select_bits | 0x0F; // all buttons released
+    byte result = select_bits | 0xCF; // all buttons released
 
     // dpad
     if (!(select_bits & 0x10)) { 

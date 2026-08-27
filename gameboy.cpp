@@ -1,8 +1,16 @@
 #include "gameboy.h"
 
 void Gameboy::load_rom(const std::string& path) {
+
+    bus.load_boot_rom("roms/boot_rom.bin");
+    cpu.regs.PC = 0x0000;         // start at the real reset vector, not 0x0100
+    cpu.regs.SP = 0x0000;         // boot rom sets this itself
+    cpu.regs.regs_8b[A] = cpu.regs.regs_8b[F] = cpu.regs.regs_8b[B] =
+        cpu.regs.regs_8b[C] = cpu.regs.regs_8b[D] = cpu.regs.regs_8b[E] = cpu.regs.regs_8b[H]
+        = cpu.regs.regs_8b[L] = 0x0000;
+
 	bus.load_rom(path);
-	cpu.regs.PC = 0x100;
+	//cpu.regs.PC = 0x100;
 }
 
 void Gameboy::run(bool ls) {
@@ -80,6 +88,7 @@ void Gameboy::run(bool ls) {
         word t_cycles = cycles * 4;
         bus.ppu.tick(t_cycles);
         timer.tick(t_cycles);
+        bus.serial_tick(t_cycles);
 
 		count++;
 
@@ -92,6 +101,10 @@ void Gameboy::run(bool ls) {
 
 
 void Gameboy::log_state() {
+    if (bus.boot_rom_enabled) {
+        return;
+    }
+
     log_file << std::hex << std::setfill('0');
 
     log_file << "A:" << std::setw(2) << static_cast<int>(cpu.regs.regs_8b[A]) << " ";
