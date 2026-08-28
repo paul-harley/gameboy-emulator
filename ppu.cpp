@@ -9,6 +9,10 @@ PPU::PPU(Bus& bus, Interrupts& interrupts) : bus(bus), interrupts(interrupts) {
 	window = SDL_CreateWindow("Main", WINDOW_WIDTH * SCALE, WINDOW_HEIGHT * SCALE, 0);
 	renderer = SDL_CreateRenderer(window, NULL);
 
+	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING, 160, 144);
+	SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+
 }
 
 
@@ -31,8 +35,15 @@ void PPU::tick(int cycles)
 		check_lyc();
 
 		if (ly == 144) {
+			//interrupts.request(VBlank);
+			//SDL_RenderPresent(renderer);
+
 			interrupts.request(VBlank);
+			SDL_UpdateTexture(texture, NULL, framebuffer, 160 * sizeof(uint32_t));
+			SDL_RenderClear(renderer);
+			SDL_RenderTexture(renderer, texture, NULL, NULL);
 			SDL_RenderPresent(renderer);
+
 		}
 		else if (ly == 154) {
 			ly = 0;
@@ -154,11 +165,9 @@ void PPU::set_rend_col(colour col) {
 void PPU::render_row_bg(byte ly) {
 
 	if (!(LCDC & 0x01)) {
-		set_rend_col(bg_palette.colour0);
 		for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
 			bg_window_color[ly][screen_x] = 0;
-			SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
-			SDL_RenderFillRect(renderer, &square);
+			framebuffer[ly][screen_x] = to_pixel(bg_palette.colour0);
 		}
 		return;
 	}
@@ -173,6 +182,9 @@ void PPU::render_row_bg(byte ly) {
 	byte tile_row = bg_y / 8;
 	byte px_y = bg_y % 8;
 
+	byte last_tile_col = 0xFF; //forces first decode
+	tile decoded;
+
 
 	for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
 
@@ -180,20 +192,20 @@ void PPU::render_row_bg(byte ly) {
 		byte tile_col = bg_x / 8;
 		byte px_x = bg_x % 8;
 
-		word map_offset = tile_row * 32 + tile_col;
-		byte tile_id = bus.read_memory(map_bp + map_offset);
+		if (tile_col != last_tile_col) {
+			word map_offset = tile_row * 32 + tile_col;
+			byte tile_id = bus.read_memory(map_bp + map_offset);
 
-		std::array<byte, 16> tile_data = get_tile_data(tile_id);
-		tile decoded = decode_tile(tile_data);
+			std::array<byte, 16> tile_data = get_tile_data(tile_id);
+			decoded = decode_tile(tile_data);
 
-
+			last_tile_col = tile_col;
+		}
 
 		// drawing
 		byte color_index = decoded[px_y][px_x];
 		bg_window_color[ly][screen_x] = color_index;
-		set_rend_col(bg_palette.get_current_colour(color_index));
-		SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
-		SDL_RenderFillRect(renderer, &square);
+		framebuffer[ly][screen_x] = to_pixel(bg_palette.get_current_colour(color_index));
 	}
 
 }
@@ -211,6 +223,9 @@ void PPU::render_row_win(byte ly) {
 	byte tile_row = window_line_counter / 8;
 	byte px_y = window_line_counter % 8;
 
+	byte last_tile_col = 0xFF;
+	tile decoded;
+
 
 	for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
 
@@ -220,20 +235,22 @@ void PPU::render_row_win(byte ly) {
 		byte tile_col = win_x / 8;
 		byte px_x = win_x % 8;
 
+		if (tile_col != last_tile_col) {
 
+			word map_offset = tile_row * 32 + tile_col;
+			byte tile_id = bus.read_memory(map_bp + map_offset);
 
-		word map_offset = tile_row * 32 + tile_col;
-		byte tile_id = bus.read_memory(map_bp + map_offset);
+			std::array<byte, 16> tile_data = get_tile_data(tile_id);
+			decoded = decode_tile(tile_data);
 
-		std::array<byte, 16> tile_data = get_tile_data(tile_id);
-		tile decoded = decode_tile(tile_data);
+			last_tile_col = tile_col;
+		}
 
 		// drawing
 		byte color_index = decoded[px_y][px_x];
 		bg_window_color[ly][screen_x] = color_index;
-		set_rend_col(bg_palette.get_current_colour(color_index));
-		SDL_FRect square = { screen_x * SCALE, ly * SCALE, SCALE, SCALE };
-		SDL_RenderFillRect(renderer, &square);
+		framebuffer[ly][screen_x] = to_pixel(bg_palette.get_current_colour(color_index));
+
 	}
 
 	window_line_counter++; 
@@ -345,14 +362,17 @@ void PPU::draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte att
 		if ((attributes & 0x80) && bg_window_color[ly][draw_x] != 0) continue; // bg priority
 
 		if (attributes & 0x10) {
-			set_rend_col(obj1_palette.get_current_colour(color_index));
+			//set_rend_col(obj1_palette.get_current_colour(color_index));
+			framebuffer[ly][draw_x] = to_pixel(obj1_palette.get_current_colour(color_index));
 		}
 		else {
 			set_rend_col(obj0_palette.get_current_colour(color_index));
+			framebuffer[ly][draw_x] = to_pixel(obj0_palette.get_current_colour(color_index));
+
 		}
 
-		SDL_FRect square = { draw_x * SCALE, ly * SCALE, SCALE, SCALE };
-		SDL_RenderFillRect(renderer, &square);
+		//SDL_FRect square = { draw_x * SCALE, ly * SCALE, SCALE, SCALE };
+		//SDL_RenderFillRect(renderer, &square);
 	}
 }
 
@@ -379,4 +399,13 @@ bool PPU::can_draw_window(byte ly) {
 	if (WX > 166) return false;
 
 	return true;
+}
+
+
+uint32_t PPU::to_pixel(colour c) {
+	byte r = std::get<0>(c);
+	byte g = std::get<1>(c);
+	byte b = std::get<2>(c);
+	byte a = std::get<3>(c);
+	return (a << 24) | (r << 16) | (g << 8) | b;
 }

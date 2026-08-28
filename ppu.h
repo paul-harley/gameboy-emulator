@@ -76,6 +76,8 @@ public:
 
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	SDL_Texture* texture;
+
 	static constexpr byte WINDOW_WIDTH = 160;
 	static constexpr byte WINDOW_HEIGHT = 144;
 	std::array<byte, WINDOW_WIDTH* WINDOW_HEIGHT > display;	
@@ -87,6 +89,8 @@ public:
 
 
 private:
+	uint32_t framebuffer[144][160];
+
     byte ly = 0;
     int dot_counter = 0;
 	byte window_line_counter = 0;
@@ -101,5 +105,8 @@ private:
 
 	void sort_sprites_x(std::vector<word>& sprites);
 	std::array<std::array<byte, 160>, 144> bg_window_color;
+
+	
+	uint32_t to_pixel(colour c);
 };
 

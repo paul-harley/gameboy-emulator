@@ -68,4 +68,4 @@ Desktop.ini
 *.txt
 
 roms/
-*./hpp
+*.hpp
