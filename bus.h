@@ -27,6 +27,11 @@ struct MemoryRegion{
 
 };
 
+enum Bank_Mode {
+	SIMPLE,
+	ADVANCED
+};
+
 
 class Bus {
 
@@ -87,4 +92,20 @@ public:
 	bool boot_rom_enabled = true;
 	void load_boot_rom(const std::string filename);
 
+
+
+	std::vector<byte> rom_data;
+	byte current_rom_bank_low5 = 0;
+	byte current_rom_bank_up2 = 0;
+	byte rom_num_banks = 2;
+	byte rom_bank_mask = 0;
+
+	byte ram_enabled = 0;
+	std::vector<byte> ext_ram;
+	byte ram_bank = 0;
+
+	void set_current_bank_low(byte data);
+	void set_high_rom_ram(byte data);
+	Bank_Mode bank_mode = SIMPLE;
+	void set_bank_mode(byte data);
 };

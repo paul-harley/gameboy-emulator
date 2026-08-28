@@ -28,16 +28,50 @@ MemoryRegion* Bus::get_correct_memory(word address) {
 byte Bus::read_memory(word address) {
 	if (test_ram_override) return test_ram_override[address];
 
-
-	if (address >= 0xFEA0 && address <= 0xFEFF) {
-		return 0;
-	}
-
 	if (boot_rom_enabled && address <= 0x00FF) {
 		return boot_rom[address];
 	}
 
+	// first 16kib of rom
+	if (address <= 0x3FFF) {
+		byte bank = 0;
+		if (bank_mode == ADVANCED) {
+			bank = (current_rom_bank_up2 << 5); // only banks 0/32/64/96 reachable here
+		}
+		size_t offset = (size_t)bank * 0x4000 + address;
+		return rom_data[offset];
 
+	}
+
+	// second 16kib of rom
+	if (address <= 0x7FFF) {
+		byte bank = current_rom_bank_low5 | (current_rom_bank_up2 << 5);
+		size_t offset = (size_t)bank * 0x4000 + (address - 0x4000);
+		if (offset >= rom_data.size()) return 0xFF; // out of range
+		return rom_data[offset];
+	}
+
+	if (address >= 0xA000 && address <= 0xBFFF) {
+		if (!ram_enabled || ext_ram.empty()) return 0xFF;
+
+		byte bank;
+		if (bank_mode == ADVANCED) {
+			bank = ram_bank;
+		}
+		else {
+			bank = 0;
+		}
+
+		size_t offset = (size_t)bank * 0x2000 + (address - 0xA000);
+		return ext_ram[offset];
+	}
+
+
+
+
+	if (address >= 0xFEA0 && address <= 0xFEFF) {
+		return 0;
+	}
 
 	switch (address) {
 	case 0xFF00:
@@ -107,6 +141,36 @@ byte Bus::read_memory(word address) {
 void Bus::write_memory(word address, byte data) {
 
 	if (test_ram_override) { test_ram_override[address] = data; return; }
+
+	if (address >= 0x0000 && address <= 0x1FFF) {
+		ram_enabled = ((data & 0x0F) == 0x0A);
+		return;
+	}
+	if (address >= 0x2000 && address <= 0x3FFF) {
+		set_current_bank_low(data);
+		return;
+	}
+	if (address >= 0x4000 && address <= 0x5FFF) {
+		set_high_rom_ram(data);
+		return;
+	}
+
+	if (address >= 0xA000 && address <= 0xBFFF) {
+		if (!ram_enabled || ext_ram.empty()) return;
+
+		byte bank;
+		if (bank_mode == ADVANCED) {
+			bank = ram_bank;
+		}
+		else {
+			bank = 0;
+		}
+
+		size_t offset = (size_t)bank * 0x2000 + (address - 0xA000);
+		ext_ram[offset] = data;
+		return;
+	}
+
 
 	
 	if (address >= 0xFEA0 && address <= 0xFEFF) {
@@ -260,30 +324,32 @@ void Bus::load_rom(const std::string filename) {
 		std::cout << "ROM not found..." << std::endl;
 		return;
 	}
-
-	byte current_byte;
-	word address = 0;
-
+	
 	rom.seekg(0, std::ios::end);
-	std::cout << "ROM size: " << rom.tellg() << " bytes\n";
+	size_t rom_size = rom.tellg();
 	rom.seekg(0, std::ios::beg);
 
-	while (rom.read(reinterpret_cast<char*> (&current_byte), 1)) {
-		
-		if (address >= 0x8000)
-		{
-			std::cout << "ROM too large\n";
-			break;
-		}
+	rom_data.resize(rom_size);
+	rom.read(reinterpret_cast<char*>(rom_data.data()), rom_size);
 
+	rom_num_banks = 2 << rom_data[0x0148];
+	rom_bank_mask = rom_num_banks - 1;
 
-		//write_memory(address, current_byte);
-		MemoryRegion* mem_region = get_correct_memory(address);
-		word local_address = address - mem_region->start_address;
-		mem_region->memory[local_address] = current_byte;
+	byte ram_size_code = rom_data[0x0149];
+	size_t ram_size_from_header = 0;
 
-		address++;
+	switch (ram_size_code) {
+		case 0x00: ram_size_from_header = 0; break;
+		case 0x02: ram_size_from_header = 8 * 1024; break;
+		case 0x03: ram_size_from_header = 32 * 1024; break;
+		case 0x04: ram_size_from_header = 128 * 1024; break;
+		case 0x05: ram_size_from_header = 64 * 1024; break;
+		default: ram_size_from_header = 0; break;
 	}
+
+	ext_ram.resize(ram_size_from_header, 0);
+
+	std::cout << "ROM LOADED!\n";
 
 }
 
@@ -311,4 +377,29 @@ void Bus::load_boot_rom(const std::string filename) {
 	}
 
 	boot_rom_enabled = true;
+}
+
+
+
+void Bus::set_current_bank_low(byte data) {
+	//top 3 bits not needed
+	word requested_bank = data & 0x1F;
+	requested_bank &= rom_bank_mask;
+	if (requested_bank == 0) requested_bank = 1;
+	current_rom_bank_low5 = requested_bank;
+}
+
+void Bus::set_high_rom_ram(byte data) {
+	current_rom_bank_up2 = data & 0x3;
+	ram_bank = data & 0x03;
+}
+
+void Bus::set_bank_mode(byte data) {
+
+	if (data == 0) {
+		bank_mode = SIMPLE;
+		return;
+	}
+
+	bank_mode = ADVANCED;
 }

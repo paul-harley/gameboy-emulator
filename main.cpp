@@ -17,10 +17,13 @@ int main() {
 
     std::string tetris_name = "roms/Tetris.gb";
     std::string alleyway_name = "roms/Alleyway.gb";
+    std::string sm_world_name = "roms/Super Mario Land.gb";
+    std::string zelda_la_name = "roms/Legend of Zelda, The - Link's Awakening.gb";
+
 
 
 	Gameboy gb;
-    gb.load_rom(tetris_name);
+    gb.load_rom(zelda_la_name);
     bool log = false;
     gb.run(log);
 
