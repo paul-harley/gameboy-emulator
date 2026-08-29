@@ -23,7 +23,7 @@ int main() {
 
 
 	Gameboy gb;
-    gb.load_rom(zelda_la_name);
+    gb.load_rom(sm_world_name);
     bool log = false;
     gb.run(log);
 

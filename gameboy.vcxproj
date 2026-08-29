@@ -152,6 +152,7 @@
     <ClCompile Include="interrupts.cpp" />
     <ClCompile Include="joypad.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="mbc.cpp" />
     <ClCompile Include="ppu.cpp" />
     <ClCompile Include="registers.cpp" />
     <ClCompile Include="run_sm83_tests.cpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="gameboy.h" />
     <ClInclude Include="interrupts.h" />
     <ClInclude Include="joypad.h" />
+    <ClInclude Include="mbc.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="registers.h" />
     <ClInclude Include="timer.h" />
