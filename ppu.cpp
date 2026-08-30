@@ -51,6 +51,7 @@ void PPU::tick(int cycles)
 		}
 
 	}
+	update_stat_mode();
 }
 
 byte PPU::get_ly() {
@@ -362,7 +363,6 @@ void PPU::draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte att
 		if ((attributes & 0x80) && bg_window_color[ly][draw_x] != 0) continue; // bg priority
 
 		if (attributes & 0x10) {
-			//set_rend_col(obj1_palette.get_current_colour(color_index));
 			framebuffer[ly][draw_x] = to_pixel(obj1_palette.get_current_colour(color_index));
 		}
 		else {
@@ -370,9 +370,6 @@ void PPU::draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte att
 			framebuffer[ly][draw_x] = to_pixel(obj0_palette.get_current_colour(color_index));
 
 		}
-
-		//SDL_FRect square = { draw_x * SCALE, ly * SCALE, SCALE, SCALE };
-		//SDL_RenderFillRect(renderer, &square);
 	}
 }
 
@@ -391,6 +388,38 @@ void PPU::check_lyc() {
 		interrupts.request(STAT_i);
 	}
 
+}
+
+void PPU::update_stat_mode() {
+	byte new_mode;
+
+	if (ly >= 144) {
+		new_mode = 1; // VBlank
+	}
+	else if (dot_counter < 80) {
+		new_mode = 2; // OAM scan
+	}
+	else if (dot_counter < 252) {
+		new_mode = 3; // Drawing
+	}
+	else {
+		new_mode = 0; // HBlank
+	}
+
+	if (new_mode != current_mode) {
+		current_mode = new_mode;
+		STAT = (STAT & 0xFC) | new_mode; // update mode bits 0-1
+
+		bool fire = false;
+		switch (new_mode) {
+		case 0: fire = STAT & 0x08; break; // Mode 0 HBlank interrupt enable
+		case 1: fire = STAT & 0x10; break; // Mode 1 VBlank STAT interrupt enable
+		case 2: fire = STAT & 0x20; break; // Mode 2 OAM interrupt enable
+		}
+		if (fire) {
+			interrupts.request(STAT_i); // or whatever your enum calls this source
+		}
+	}
 }
 
 bool PPU::can_draw_window(byte ly) {

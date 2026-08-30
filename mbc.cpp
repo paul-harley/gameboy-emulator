@@ -122,3 +122,51 @@ byte MBC1::read_rom(word address) {
 	return 0xFF;
 }
 
+
+
+void MBC2::write_ram(word address, byte data) {
+	if (!ram_enabled) return;
+	word local = address & 0x1FF; // only bottom 9 bits used, enough to see all 512 addresses (2^9)
+	ext_ram[local] = data & 0x0F; 
+}
+
+byte MBC2::read_ram(word address) {
+	if (!ram_enabled) return 0xFF;
+	word local = address & 0x1FF;
+	return ext_ram[local] | 0xF0; // upper nibble floats high
+}
+
+
+void MBC2::write_rom(word address, byte data) {
+
+	// select rom bank
+	if (address & 0x0100) {
+		rom_bank = data & 0xF;
+		if (rom_bank == 0) {
+			rom_bank = 1;
+		}
+		return;
+	}
+
+	// control ram enable
+	ram_enabled = ((data & 0xF) == 0xA) ? true : false;
+	return;
+
+}
+
+byte MBC2::read_rom(word address) {
+
+	// first 16kib of rom
+	if (address <= 0x3FFF) {
+		return rom_data[address];
+	}
+
+	// second 16kib of rom
+	if (address <= 0x7FFF) {
+		size_t offset = (size_t)rom_bank * 0x4000 + (address - 0x4000);
+		if (offset >= rom_data.size()) return 0xFF; // out of range
+		return rom_data[offset];
+	}
+
+	return 0xFF;
+}

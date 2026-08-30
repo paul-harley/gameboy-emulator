@@ -101,6 +101,9 @@ private:
 	Palette obj1_palette;
 
 	void check_lyc();
+	byte current_mode = 2;
+	void update_stat_mode();
+
 	bool can_draw_window(byte ly);
 
 	void sort_sprites_x(std::vector<word>& sprites);

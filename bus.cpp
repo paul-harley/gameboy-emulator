@@ -279,7 +279,7 @@ void Bus::load_rom(const std::string filename) {
 	rom.read(reinterpret_cast<char*>(rom_data.data()), rom_size);
 
 
-	mbc = std::make_unique<MBC1>(rom_data);
+	mbc = std::make_unique<MBC2>(rom_data);
 
 	std::cout << "ROM LOADED!\n";
 

@@ -68,3 +68,22 @@ private:
 	void set_bank_mode(byte data);
 
 };
+
+
+class MBC2 : public MBC {
+public:
+	MBC2(const std::vector<byte>& rom) : rom_data(rom) {
+		ext_ram.resize(512, 0);
+	}
+
+	void write_ram(word address, byte data) override;
+	byte read_ram(word address) override;
+
+	void write_rom(word address, byte data) override;
+	byte read_rom(word address) override;
+
+private:
+	byte rom_bank = 1;
+	const std::vector<byte>& rom_data;
+
+};
