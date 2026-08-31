@@ -279,7 +279,7 @@ void Bus::load_rom(const std::string filename) {
 	rom.read(reinterpret_cast<char*>(rom_data.data()), rom_size);
 
 
-	mbc = std::make_unique<MBC2>(rom_data);
+	mbc = std::make_unique<MBC3>(rom_data);
 
 	std::cout << "ROM LOADED!\n";
 
@@ -310,3 +310,31 @@ void Bus::load_boot_rom(const std::string filename) {
 }
 
 
+
+void Bus::serialize(std::ofstream& out) {
+	for (auto* region : main_memory) {
+		out.write(reinterpret_cast<char*>(region->memory.data()), region->memory.size());
+	}
+
+	out.write(reinterpret_cast<char*>(&boot_rom_enabled), sizeof(boot_rom_enabled));
+	out.write(reinterpret_cast<char*>(&serial_data), sizeof(serial_data));
+	out.write(reinterpret_cast<char*>(&serial_control), sizeof(serial_control));
+	out.write(reinterpret_cast<char*>(&transfer_active), sizeof(transfer_active));
+	out.write(reinterpret_cast<char*>(&transfer_cycles_remaining), sizeof(transfer_cycles_remaining));
+
+	mbc->serialize(out); 
+}
+
+void Bus::deserialize(std::ifstream& in) {
+	for (auto* region : main_memory) {
+		in.read(reinterpret_cast<char*>(region->memory.data()), region->memory.size());
+	}
+
+	in.read(reinterpret_cast<char*>(&boot_rom_enabled), sizeof(boot_rom_enabled));
+	in.read(reinterpret_cast<char*>(&serial_data), sizeof(serial_data));
+	in.read(reinterpret_cast<char*>(&serial_control), sizeof(serial_control));
+	in.read(reinterpret_cast<char*>(&transfer_active), sizeof(transfer_active));
+	in.read(reinterpret_cast<char*>(&transfer_cycles_remaining), sizeof(transfer_cycles_remaining));
+
+	mbc->deserialize(in);
+}

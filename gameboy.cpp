@@ -13,9 +13,11 @@ void Gameboy::load_rom(const std::string& path) {
 	//cpu.regs.PC = 0x100;
 }
 
-void Gameboy::run(bool ls) {
+void Gameboy::run() {
 
     long long count = 0;
+    bool logging_enabled = false;
+
 
     bool running = true;
     SDL_Event event;
@@ -31,6 +33,15 @@ void Gameboy::run(bool ls) {
         {
             if (event.type == SDL_EVENT_QUIT)
                 running = false;
+
+            if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
+                if (event.key.key == SDLK_F5) {
+                    save_state("quicksave.bin");
+                }
+                if (event.key.key == SDLK_F9) {
+                    load_state("quicksave.bin");
+                }
+            }
 
             if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
                 if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
@@ -48,12 +59,17 @@ void Gameboy::run(bool ls) {
                 case SDLK_X:     joypad.b = pressed; break;
                 case SDLK_RETURN: joypad.start = pressed; break;
                 case SDLK_BACKSPACE: joypad.select = pressed; break;
+
+
+                case SDLK_F1: logging_enabled = !logging_enabled;
+                    std::cout << "Logging " << (logging_enabled ? "ON" : "OFF") << "\n"; break;
+
                 }
             }
 
         }
 
-        if (ls) log_state();
+        if (logging_enabled) log_state();
 
         if (cpu.ime_pending) {
             cpu.ime = true;
@@ -94,7 +110,7 @@ void Gameboy::run(bool ls) {
 
 	}
 
-    if (ls) {
+    if (logging_enabled) {
         log_file.close();
     }
 }
@@ -127,4 +143,34 @@ void Gameboy::log_state() {
         << std::setw(2) << static_cast<int>(cpu.bus.read_memory(pc + 2)) << ","
         << std::setw(2) << static_cast<int>(cpu.bus.read_memory(pc + 3))
         << std::endl;
+}
+
+
+
+void Gameboy::save_state(const std::string& path) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) {
+        std::cout << "Failed to open save state file (writing)\n";
+        return;
+    }
+
+    cpu.serialize(out);
+    bus.serialize(out);
+    bus.ppu.serialize(out);
+    timer.serialize(out);
+    interrupts.serialize(out);
+}
+
+void Gameboy::load_state(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) {
+        std::cout << "Failed to open save state file (loading)\n";
+        return;
+    }
+
+    cpu.deserialize(in);
+    bus.deserialize(in);
+    bus.ppu.deserialize(in);
+    timer.deserialize(in);
+    interrupts.deserialize(in);
 }

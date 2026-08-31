@@ -10,3 +10,14 @@ bool Interrupts::pending() {
 	}
 	return true;
 }
+
+
+void Interrupts::serialize(std::ofstream& out) {
+	out.write(reinterpret_cast<char*>(&IE), sizeof(IE));
+	out.write(reinterpret_cast<char*>(&IF), sizeof(IF));
+}
+
+void Interrupts::deserialize(std::ifstream& in) {
+	in.read(reinterpret_cast<char*>(&IE), sizeof(IE));
+	in.read(reinterpret_cast<char*>(&IF), sizeof(IF));
+}

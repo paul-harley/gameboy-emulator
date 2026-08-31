@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <fstream>
 
 enum Interrupt_Type {
     VBlank = 0, // bit 0, vector 0x40
@@ -19,4 +20,7 @@ struct Interrupts {
 
     void request(Interrupt_Type type);
     bool pending();
+
+    void serialize(std::ofstream& out);
+    void deserialize(std::ifstream& in);
 };

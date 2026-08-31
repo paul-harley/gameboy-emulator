@@ -20,13 +20,15 @@ int main() {
     std::string sm_world_name = "roms/Super Mario Land.gb";
     std::string zelda_la_name = "roms/Legend of Zelda, The - Link's Awakening.gb";
     std::string f1_name = "roms/F1Race.gb";
+    std::string pokemon_Blue_name = "roms/PokemonBlue.gb";
+    std::string pokemon_Gold_name = "roms/PokemonGold.gbc";
+
 
 
 
 	Gameboy gb;
-    gb.load_rom(f1_name);
-    bool log = false;
-    gb.run(log);
+    gb.load_rom(pokemon_Gold_name);
+    gb.run();
 
 	return 0;
 }

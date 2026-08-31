@@ -87,3 +87,23 @@ byte Timer::get_tac_bit() {
 void Timer::reset_sys_counter() {
 	system_counter = 0;
 }
+
+
+
+void Timer::serialize(std::ofstream& out) {
+	out.write(reinterpret_cast<char*>(&DIV), sizeof(DIV));
+	out.write(reinterpret_cast<char*>(&TIMA), sizeof(TIMA));
+	out.write(reinterpret_cast<char*>(&TMA), sizeof(TMA));
+	out.write(reinterpret_cast<char*>(&TAC), sizeof(TAC));
+	out.write(reinterpret_cast<char*>(&system_counter), sizeof(system_counter));
+	out.write(reinterpret_cast<char*>(&overflow_pending), sizeof(overflow_pending));
+}
+
+void Timer::deserialize(std::ifstream& in) {
+	in.read(reinterpret_cast<char*>(&DIV), sizeof(DIV));
+	in.read(reinterpret_cast<char*>(&TIMA), sizeof(TIMA));
+	in.read(reinterpret_cast<char*>(&TMA), sizeof(TMA));
+	in.read(reinterpret_cast<char*>(&TAC), sizeof(TAC));
+	in.read(reinterpret_cast<char*>(&system_counter), sizeof(system_counter));
+	in.read(reinterpret_cast<char*>(&overflow_pending), sizeof(overflow_pending));
+}

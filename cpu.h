@@ -41,6 +41,9 @@ public:
 
 
 	byte interrupt_handler();
+	void serialize(std::ofstream& out);
+	void deserialize(std::ifstream& in);
+
 
 private:
 

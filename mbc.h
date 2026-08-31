@@ -1,6 +1,10 @@
 #pragma once
 #include "types.h"
+
 #include <vector>
+#include <ctime>
+#include <fstream>
+
 
 
 enum Bank_Mode {
@@ -21,6 +25,9 @@ public:
 	virtual byte read_rom(word address) = 0;
 
 	virtual ~MBC() = default;
+
+	virtual void serialize(std::ofstream& out) = 0;
+	virtual void deserialize(std::ifstream& in) = 0;
 
 
 protected:
@@ -85,5 +92,50 @@ public:
 private:
 	byte rom_bank = 1;
 	const std::vector<byte>& rom_data;
+
+};
+
+
+class MBC3 : public MBC {
+
+public:
+	MBC3(std::vector<byte>& rom_data) : rom_data(rom_data) {
+		init_rom_bank_info(rom_data[0x0148]);
+		init_ram_size(rom_data[0x0149]);
+
+		// THIS PROBABLY NEEDS TO BE ADDED TO SAVES ONCE I GET THERE
+		// IF THERE IS A BASETIME IN THE SAVE DONT CHANGE IT,
+		// ELSE DO THIS AND SAVE IT
+		rtc_base_time = std::time(nullptr);
+	}
+
+	void write_rom (word address, byte data) override;
+	byte read_rom (word address) override;
+	
+	void write_ram (word address, byte data) override;
+	byte read_ram (word address) override;
+
+	void serialize(std::ofstream& out) override;
+	void deserialize(std::ifstream& in) override;
+
+
+private:
+	byte rom_bank = 1;
+	const std::vector<byte>& rom_data;
+
+	byte ram_rtc_select = 0;
+	std::time_t rtc_base_time;
+
+	bool rtc_halted = false;
+	long long frozen_elapsed = 0;
+	long long get_current_elapsed();
+	void set_current_elapsed(long long new_elapsed);
+
+	byte last_latch_data = 0xFF;
+	byte RTC_S = 0;
+	byte RTC_M = 0;
+	byte RTC_H = 0;
+	byte RTC_DL = 0;
+	byte RTC_DH = 0;
 
 };

@@ -18,6 +18,9 @@ public:
 	void tick(byte cycles);
 	void reset_sys_counter();
 
+	void serialize(std::ofstream& out);
+	void deserialize(std::ifstream& in);
+
 private:
 	bool overflow_pending = false;
 

@@ -87,6 +87,8 @@ public:
 	void render_row_sprites(byte ly);
 	void draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte attributes, byte height);
 
+	void serialize(std::ofstream& out);
+	void deserialize(std::ifstream& in);
 
 private:
 	uint32_t framebuffer[144][160];

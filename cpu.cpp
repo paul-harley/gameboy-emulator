@@ -671,4 +671,18 @@ void CPU::set_Reg8(Reg8 reg, byte value) {
 
 
 
+void CPU::serialize(std::ofstream& out) {
+	out.write(reinterpret_cast<char*>(&regs), sizeof(regs));
+	out.write(reinterpret_cast<char*>(&ime), sizeof(ime));
+	out.write(reinterpret_cast<char*>(&ime_pending), sizeof(ime_pending));
+	out.write(reinterpret_cast<char*>(&halted), sizeof(halted));
+	out.write(reinterpret_cast<char*>(&halted_bug), sizeof(halted_bug));
+}
 
+void CPU::deserialize(std::ifstream& in) {
+	in.read(reinterpret_cast<char*>(&regs), sizeof(regs));
+	in.read(reinterpret_cast<char*>(&ime), sizeof(ime));
+	in.read(reinterpret_cast<char*>(&ime_pending), sizeof(ime_pending));
+	in.read(reinterpret_cast<char*>(&halted), sizeof(halted));
+	in.read(reinterpret_cast<char*>(&halted_bug), sizeof(halted_bug));
+}

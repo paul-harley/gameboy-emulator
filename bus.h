@@ -93,4 +93,6 @@ public:
 
 	std::vector<byte> rom_data;
 	
+	void serialize(std::ofstream& out);
+	void deserialize(std::ifstream& in);
 };

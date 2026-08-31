@@ -438,3 +438,57 @@ uint32_t PPU::to_pixel(colour c) {
 	byte a = std::get<3>(c);
 	return (a << 24) | (r << 16) | (g << 8) | b;
 }
+
+
+
+void PPU::serialize(std::ofstream& out) {
+	out.write(reinterpret_cast<char*>(&LYC), sizeof(LYC));
+	out.write(reinterpret_cast<char*>(&STAT), sizeof(STAT));
+	out.write(reinterpret_cast<char*>(&LCDC), sizeof(LCDC));
+	out.write(reinterpret_cast<char*>(&SCY), sizeof(SCY));
+	out.write(reinterpret_cast<char*>(&SCX), sizeof(SCX));
+	out.write(reinterpret_cast<char*>(&WX), sizeof(WX));
+	out.write(reinterpret_cast<char*>(&WY), sizeof(WY));
+	out.write(reinterpret_cast<char*>(&BGP), sizeof(BGP));
+	out.write(reinterpret_cast<char*>(&OBP0), sizeof(OBP0));
+	out.write(reinterpret_cast<char*>(&OBP1), sizeof(OBP1));
+
+	out.write(reinterpret_cast<char*>(&ly), sizeof(ly));
+	out.write(reinterpret_cast<char*>(&dot_counter), sizeof(dot_counter));
+	out.write(reinterpret_cast<char*>(&window_line_counter), sizeof(window_line_counter));
+	out.write(reinterpret_cast<char*>(&current_mode), sizeof(current_mode));
+
+	out.write(reinterpret_cast<char*>(&bg_palette), sizeof(bg_palette));
+	out.write(reinterpret_cast<char*>(&obj0_palette), sizeof(obj0_palette));
+	out.write(reinterpret_cast<char*>(&obj1_palette), sizeof(obj1_palette));
+
+	for (auto& row : bg_window_color) {
+		out.write(reinterpret_cast<char*>(row.data()), row.size());
+	}
+}
+
+void PPU::deserialize(std::ifstream& in) {
+	in.read(reinterpret_cast<char*>(&LYC), sizeof(LYC));
+	in.read(reinterpret_cast<char*>(&STAT), sizeof(STAT));
+	in.read(reinterpret_cast<char*>(&LCDC), sizeof(LCDC));
+	in.read(reinterpret_cast<char*>(&SCY), sizeof(SCY));
+	in.read(reinterpret_cast<char*>(&SCX), sizeof(SCX));
+	in.read(reinterpret_cast<char*>(&WX), sizeof(WX));
+	in.read(reinterpret_cast<char*>(&WY), sizeof(WY));
+	in.read(reinterpret_cast<char*>(&BGP), sizeof(BGP));
+	in.read(reinterpret_cast<char*>(&OBP0), sizeof(OBP0));
+	in.read(reinterpret_cast<char*>(&OBP1), sizeof(OBP1));
+
+	in.read(reinterpret_cast<char*>(&ly), sizeof(ly));
+	in.read(reinterpret_cast<char*>(&dot_counter), sizeof(dot_counter));
+	in.read(reinterpret_cast<char*>(&window_line_counter), sizeof(window_line_counter));
+	in.read(reinterpret_cast<char*>(&current_mode), sizeof(current_mode));
+
+	in.read(reinterpret_cast<char*>(&bg_palette), sizeof(bg_palette));
+	in.read(reinterpret_cast<char*>(&obj0_palette), sizeof(obj0_palette));
+	in.read(reinterpret_cast<char*>(&obj1_palette), sizeof(obj1_palette));
+
+	for (auto& row : bg_window_color) {
+		in.read(reinterpret_cast<char*>(row.data()), row.size());
+	}
+}

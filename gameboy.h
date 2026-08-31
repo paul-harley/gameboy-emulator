@@ -29,9 +29,11 @@ public:
 
 
 	void load_rom(const std::string& path);
-	void run(bool log_state);
+	void run();
 
 private:
 	std::ofstream log_file;
 	void log_state();
+	void save_state(const std::string& path);
+	void load_state(const std::string& path);
 };
