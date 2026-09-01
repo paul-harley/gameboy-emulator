@@ -16,8 +16,17 @@ PPU::PPU(Bus& bus, Interrupts& interrupts) : bus(bus), interrupts(interrupts) {
 }
 
 
-void PPU::tick(int cycles)
-{
+void PPU::tick(int cycles){
+
+	if (!(LCDC & 0x80)) {
+		ly = 0;
+		dot_counter = 0;
+		window_line_counter = 0;
+		STAT = (STAT & ~0x03); // mode 0
+		return;
+	}
+
+
     dot_counter += cycles;
 
 	while (dot_counter >= 456)

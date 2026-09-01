@@ -178,10 +178,6 @@ byte MBC2::read_rom(word address) {
 
 void MBC3::write_ram(word address, byte data) {
 	if (!ram_enabled) return;
-	
-	std::cout << "RAM write: select=" << std::hex << (int)ram_rtc_select
-		<< " addr=" << address << " data=" << (int)data << "\n";
-
 
 	if (ram_rtc_select <= 0x07) {
 		size_t offset = (size_t)ram_rtc_select * 0x2000 + (address - 0xA000);
@@ -225,10 +221,6 @@ void MBC3::write_ram(word address, byte data) {
 
 byte MBC3::read_ram(word address) {
 	if (!ram_enabled) return 0xFF;
-
-	std::cout << "RAM read: select=" << std::hex << (int)ram_rtc_select
-		<< " addr=" << address << "\n";
-
 
 	if (ram_rtc_select <= 0x07) {
 		size_t offset = (size_t)ram_rtc_select * 0x2000 + (address - 0xA000);
