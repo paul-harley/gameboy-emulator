@@ -57,6 +57,7 @@ private:
 
 	byte boot_rom[256];
 	std::unique_ptr<MBC> mbc;
+	void set_mbc(byte cart_type);
 
 public:
 	word last_pc = 0;

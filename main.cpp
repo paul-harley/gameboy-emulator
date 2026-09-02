@@ -22,12 +22,13 @@ int main() {
     std::string f1_name = "roms/F1Race.gb";
     std::string pokemon_Blue_name = "roms/PokemonBlue.gb";
     std::string pokemon_Gold_name = "roms/PokemonGold.gbc";
+    std::string wario_land_name = "roms/WarioLand2.gb";
 
 
 
 
 	Gameboy gb;
-    gb.load_rom(pokemon_Gold_name);
+    gb.load_rom(alleyway_name);
     gb.run();
 
 	return 0;

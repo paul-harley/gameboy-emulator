@@ -48,6 +48,27 @@ protected:
 };
 
 
+class MBC_NONE: public MBC {
+
+public:
+	MBC_NONE(const std::vector<byte>& rom_data): rom_data(rom_data) {
+
+	}
+
+	void write_ram(word address, byte data) override;
+	byte read_ram(word address) override;
+
+	void write_rom(word address, byte data) override;
+	byte read_rom(word address) override;
+
+	void serialize(std::ofstream& out) override;
+	void deserialize(std::ifstream& in) override;
+
+private:
+	const std::vector<byte>& rom_data;
+};
+
+
 class MBC1 : public MBC {
 
 public:
@@ -61,6 +82,9 @@ public:
 
 	void write_rom(word address, byte data) override;
 	byte read_rom(word address) override;
+
+	void serialize(std::ofstream& out) override;
+	void deserialize(std::ifstream& in) override;
 
 private:
 	byte current_rom_bank_low5 = 0;
@@ -88,6 +112,9 @@ public:
 
 	void write_rom(word address, byte data) override;
 	byte read_rom(word address) override;
+
+	void serialize(std::ofstream& out) override;
+	void deserialize(std::ifstream& in) override;
 
 private:
 	byte rom_bank = 1;
@@ -137,5 +164,32 @@ private:
 	byte RTC_H = 0;
 	byte RTC_DL = 0;
 	byte RTC_DH = 0;
+
+};
+
+
+class MBC5 : public MBC {
+
+public:
+	MBC5(const std::vector<byte>& rom_data) : rom_data(rom_data) {
+		init_rom_bank_info(rom_data[0x0148]);
+		init_ram_size(rom_data[0x0149]);
+	}
+
+	void write_ram(word address, byte data) override;
+	byte read_ram(word address) override; //same as mbc1
+
+	void write_rom(word address, byte data) override;
+	byte read_rom(word address) override;
+
+
+	void serialize(std::ofstream& out) override;
+	void deserialize(std::ifstream& in) override;
+
+private:
+	const std::vector<byte>& rom_data;
+	byte ram_bank = 0;
+	byte current_rom_bank_low8 = 0;
+	byte current_rom_bank_up1 = 0;
 
 };

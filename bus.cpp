@@ -279,11 +279,51 @@ void Bus::load_rom(const std::string filename) {
 	rom.read(reinterpret_cast<char*>(rom_data.data()), rom_size);
 
 
-	mbc = std::make_unique<MBC3>(rom_data);
+	byte cart_type = rom_data[0x0147];
+	set_mbc(cart_type);
+
 
 	std::cout << "ROM LOADED!\n";
 
 }
+
+void Bus::set_mbc(byte cart_type) {
+
+	switch (cart_type) {
+	case 0x00:
+		mbc = std::make_unique<MBC_NONE>(rom_data);
+		break;
+	case 0x01:
+	case 0x02:
+	case 0x03:
+		mbc = std::make_unique<MBC1>(rom_data);
+		break;
+	case 0x05:
+	case 0x06:
+		mbc = std::make_unique<MBC2>(rom_data);
+		break;
+	case 0x0F:
+	case 0x10:
+	case 0x11:
+	case 0x12:
+	case 0x13:
+		mbc = std::make_unique<MBC3>(rom_data);
+		break;
+	case 0x19:
+	case 0x1A:
+	case 0x1B:
+	case 0x1C:
+	case 0x1D:
+	case 0x1E:
+		mbc = std::make_unique<MBC5>(rom_data);
+		break;
+	default:
+		std::cout << "Unsupported cartridge type: 0x" << std::hex << (int)cart_type << "\n";
+		mbc = std::make_unique<MBC_NONE>(rom_data);
+		break;
+	}
+}
+
 
 void Bus::load_boot_rom(const std::string filename) {
 	std::ifstream rom(filename, std::ios::binary);

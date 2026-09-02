@@ -22,6 +22,31 @@ void MBC::init_ram_size(byte ram_size_byte) {
 }
 
 
+// ********** MBC NONE **********
+
+void MBC_NONE::write_ram(word address, byte data){
+	return;
+}
+
+byte MBC_NONE::read_ram(word address) {
+	return 0XFF;
+}
+
+void MBC_NONE::write_rom(word address, byte data) {
+	return;
+}
+
+byte MBC_NONE::read_rom(word address) {
+	return rom_data[address];
+}
+
+void MBC_NONE::serialize(std::ofstream& out) {
+	// nothing stateful to save
+}
+
+void MBC_NONE::deserialize(std::ifstream& in) {
+	// nothing to restore
+}
 
 
 
@@ -124,6 +149,26 @@ byte MBC1::read_rom(word address) {
 	return 0xFF;
 }
 
+void MBC1::serialize(std::ofstream& out) {
+
+	out.write(reinterpret_cast<char*>(&ram_enabled), sizeof(ram_enabled)); // from MBC base
+	out.write(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+	out.write(reinterpret_cast<char*>(&ram_bank), sizeof(ram_bank));
+	out.write(reinterpret_cast<char*>(&current_rom_bank_low5), sizeof(current_rom_bank_low5));
+	out.write(reinterpret_cast<char*>(&current_rom_bank_up2), sizeof(current_rom_bank_up2));
+	out.write(reinterpret_cast<char*>(&bank_mode), sizeof(bank_mode));
+}
+
+void MBC1::deserialize(std::ifstream& in) {
+	in.read(reinterpret_cast<char*>(&ram_enabled), sizeof(ram_enabled)); // from MBC base
+	in.read(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+	in.read(reinterpret_cast<char*>(&ram_bank), sizeof(ram_bank));
+	in.read(reinterpret_cast<char*>(&current_rom_bank_low5), sizeof(current_rom_bank_low5));
+	in.read(reinterpret_cast<char*>(&current_rom_bank_up2), sizeof(current_rom_bank_up2));
+	in.read(reinterpret_cast<char*>(&bank_mode), sizeof(bank_mode));
+}
+
+
 
 // ********** MBC2 **********
 void MBC2::write_ram(word address, byte data) {
@@ -170,6 +215,18 @@ byte MBC2::read_rom(word address) {
 	}
 
 	return 0xFF;
+}
+
+void MBC2::serialize(std::ofstream& out) {
+	out.write(reinterpret_cast<char*>(&ram_enabled), sizeof(ram_enabled)); // from MBC base
+	out.write(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+	out.write(reinterpret_cast<char*>(&rom_bank), sizeof(rom_bank));
+}
+
+void MBC2::deserialize(std::ifstream& in) {
+	in.read(reinterpret_cast<char*>(&ram_enabled), sizeof(ram_enabled)); // from MBC base
+	in.read(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+	in.read(reinterpret_cast<char*>(&rom_bank), sizeof(rom_bank));
 }
 
 
@@ -360,4 +417,94 @@ void MBC3::deserialize(std::ifstream& in) {
 	in.read(reinterpret_cast<char*>(&RTC_DL), sizeof(RTC_DL));
 	in.read(reinterpret_cast<char*>(&RTC_DH), sizeof(RTC_DH));
 	in.read(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+}
+
+
+
+// ********** MBC5 **********
+
+void MBC5::write_ram(word address, byte data) {
+
+	if (!ram_enabled || ext_ram.empty())
+		return;
+
+	size_t offset = (size_t)ram_bank * 0x2000 + (address - 0xA000);
+	if (offset >= ext_ram.size()) return;
+
+	ext_ram[offset] = data;
+
+
+}
+
+byte MBC5::read_ram(word address) {
+
+	if (!ram_enabled || ext_ram.empty())
+		return 0xFF;
+
+	size_t offset = (size_t)ram_bank * 0x2000 + (address - 0xA000);
+	if (offset >= ext_ram.size()) return 0xFF;
+
+	return ext_ram[offset];
+
+}
+
+void MBC5::write_rom(word address, byte data) {
+
+	if (address <= 0x1FFF) {
+		ram_enabled = (data & 0x0F) == 0x0A;
+		return;
+	}
+
+
+	if (address <= 0x2fff) {
+		current_rom_bank_low8 = data;
+		return;
+	}
+
+
+	if (address <= 0x3fff) {
+		current_rom_bank_up1 = data & 1;
+		return;
+	}
+
+
+	if (address <= 0x5fff) {
+		ram_bank = data & 0x0F;
+	}
+}
+
+byte MBC5::read_rom(word address) {
+
+	if (address <= 0x3FFF) {
+		return rom_data[address];
+	}
+
+
+	if (address <= 0x7FFF) {
+		word bank = (current_rom_bank_up1 << 8) | current_rom_bank_low8;
+		size_t offset = (size_t)bank * 0x4000 + (address - 0x4000);
+		if (offset >= rom_data.size()) return 0xFF; // out of range
+		return rom_data[offset];
+	}
+
+	return 0XFF;
+}
+
+void MBC5::serialize(std::ofstream& out) {
+	out.write(reinterpret_cast<char*>(&ram_enabled), sizeof(ram_enabled)); // from MBC base
+	out.write(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+	out.write(reinterpret_cast<char*>(&ram_bank), sizeof(ram_bank));
+	out.write(reinterpret_cast<char*>(&current_rom_bank_low8), sizeof(current_rom_bank_low8));
+	out.write(reinterpret_cast<char*>(&current_rom_bank_up1), sizeof(current_rom_bank_up1));
+
+}
+
+void MBC5::deserialize(std::ifstream& in) {
+	in.read(reinterpret_cast<char*>(&ram_enabled), sizeof(ram_enabled)); // from MBC base
+	in.read(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+	in.read(reinterpret_cast<char*>(&ram_bank), sizeof(ram_bank));
+	in.read(reinterpret_cast<char*>(&current_rom_bank_low8), sizeof(current_rom_bank_low8));
+	in.read(reinterpret_cast<char*>(&current_rom_bank_up1), sizeof(current_rom_bank_up1));
+
+
 }
