@@ -142,6 +142,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="apu.cpp" />
     <ClCompile Include="bus.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="cpu_arithmetic.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="apu.h" />
     <ClInclude Include="bus.h" />
     <ClInclude Include="colours.h" />
     <ClInclude Include="cpu.h" />

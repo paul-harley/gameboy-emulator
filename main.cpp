@@ -28,7 +28,7 @@ int main() {
 
 
 	Gameboy gb;
-    gb.load_rom(alleyway_name);
+    gb.load_rom(pokemon_Blue_name);
     gb.run();
 
 	return 0;

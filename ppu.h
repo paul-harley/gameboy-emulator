@@ -90,6 +90,8 @@ public:
 	void serialize(std::ofstream& out);
 	void deserialize(std::ifstream& in);
 
+	bool frame_ready = false; // to flush audio buffer every frame 
+
 private:
 	uint32_t framebuffer[144][160];
 

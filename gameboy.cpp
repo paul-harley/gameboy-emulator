@@ -105,6 +105,17 @@ void Gameboy::run() {
         bus.ppu.tick(t_cycles);
         timer.tick(t_cycles);
         bus.serial_tick(t_cycles);
+        apu.tick(t_cycles);
+
+        if (bus.ppu.frame_ready) {
+            bus.ppu.frame_ready = false;
+
+            if (!apu.sample_buffer.empty()) {
+                SDL_PutAudioStreamData(apu.audio_stream, apu.sample_buffer.data(),
+                    apu.sample_buffer.size() * sizeof(float));
+                apu.sample_buffer.clear();
+            }
+        }
 
 		count++;
 

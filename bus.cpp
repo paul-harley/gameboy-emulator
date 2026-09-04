@@ -40,6 +40,10 @@ byte Bus::read_memory(word address) {
 		return mbc->read_ram(address);
 	}
 
+	if (address >= 0xFF10 && address <= 0xFF3F) {
+		return apu.read(address);
+	}
+
 	if (address >= 0xFEA0 && address <= 0xFEFF) {
 		return 0;
 	}
@@ -125,6 +129,10 @@ void Bus::write_memory(word address, byte data) {
 		return;
 	}
 
+	if (address >= 0xFF10 && address <= 0xFF3F) {
+		apu.write(address, data);
+		return;
+	}
 	
 	if (address >= 0xFEA0 && address <= 0xFEFF) {
 		return;
@@ -227,6 +235,7 @@ void Bus::write_memory(word address, byte data) {
 	mem_region->memory[local_address] = data;
 
 }
+
 
 void Bus::serial_tick(int t_cycles) {
 	if (!transfer_active) return;

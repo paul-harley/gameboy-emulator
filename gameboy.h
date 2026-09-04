@@ -5,6 +5,8 @@
 #include "bus.h"
 #include "interrupts.h"
 #include "timer.h"
+#include "apu.h"
+
 #include <fstream>
 #include <iomanip>
 
@@ -19,11 +21,13 @@ public:
 	Bus bus;      
 	CPU cpu;   
 	Timer timer;
+	APU apu;
 
 	Gameboy()
-		: bus(joypad, interrupts, timer)
+		: bus(joypad, interrupts, timer, apu)
 		, cpu(bus, interrupts, timer)
 		, timer(interrupts)
+		, apu(timer)
 		, log_file("log.txt")
 	{}
 

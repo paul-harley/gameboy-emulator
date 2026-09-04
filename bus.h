@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "joypad.h"
 #include "mbc.h"
+#include "apu.h"
 
 
 struct MemoryRegion{	
@@ -66,11 +67,13 @@ public:
 	Joypad& joypad;
 	Interrupts& interrupts;
 	Timer& timer;
+	APU& apu;
 
-	Bus(Joypad& joypad, Interrupts& interrupts, Timer& timer) : 
+	Bus(Joypad& joypad, Interrupts& interrupts, Timer& timer, APU& apu) : 
 		joypad(joypad),
 		interrupts(interrupts),
 		timer(timer),
+		apu(apu),
 		ppu(*this, interrupts)
 	{}
 

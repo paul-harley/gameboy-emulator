@@ -44,15 +44,13 @@ void PPU::tick(int cycles){
 		check_lyc();
 
 		if (ly == 144) {
-			//interrupts.request(VBlank);
-			//SDL_RenderPresent(renderer);
-
 			interrupts.request(VBlank);
 			SDL_UpdateTexture(texture, NULL, framebuffer, 160 * sizeof(uint32_t));
 			SDL_RenderClear(renderer);
 			SDL_RenderTexture(renderer, texture, NULL, NULL);
 			SDL_RenderPresent(renderer);
 
+			frame_ready = true;
 		}
 		else if (ly == 154) {
 			ly = 0;
