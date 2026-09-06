@@ -61,6 +61,40 @@ private:
 	word compute_sweep(); // returns new period, disables channel on overflow
 };
 
+class WaveChannel {
+
+public:
+	WaveChannel() {
+		wave_ram.resize(16, 0);
+	}
+
+	bool dac_enabled = false; //NR30 bit 7
+	byte inital_length_timer = 0; //NR31
+	byte length_timer = 0; // the actual live countdown, dec 256Hz
+	byte output_level = 0; // NR32 bits 5-6
+
+	byte period_low = 0; // NR33
+	byte period_high = 0; // NR33 bits 0-2
+
+	bool length_enabled = false;
+	bool enabled = false;
+
+	void trigger();
+	void tick(word t_clycles);
+	byte get_output();
+	std::vector<byte>wave_ram;
+
+	void tick_length();
+
+private:
+
+	word period = 0;            // combined 11-bit value from NR33/NR34
+	word get_written_period() { return period_low | (period_high << 8); };
+	int period_timer = 0;
+
+	byte waveform_position = 0;
+
+};
 
 
 class APU {
@@ -89,6 +123,7 @@ private:
 
 	SquareChannel ch1;
 	PulseChannel ch2;
+	WaveChannel ch3;
 
 
 	byte frame_sequencer_step = 0;

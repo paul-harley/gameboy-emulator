@@ -20,6 +20,10 @@ APU::APU(Timer& timer) : timer(timer) {
 
 byte APU::read(word address) {
 
+	if (address >= 0xFF30 && address <= 0xFF3F) {
+		word local_address = address - 0xFF30;
+		return ch3.wave_ram[local_address];
+	}
 
 	switch (address) {
 
@@ -61,6 +65,40 @@ byte APU::read(word address) {
 		return ch1.length_enabled << 6;
 	}
 
+
+	//******* CHANNEL 2
+	case 0xFF16: {
+		return (ch2.duty << 6) | ch2.length_timer;
+	}
+	case 0xFF17: {
+		return (ch2.initial_volume << 4) | (ch2.envelope_increase << 3);
+	}
+	case 0xFF18: {
+		return 0XFF; //write only
+	}
+	case 0xFF19: {
+		return ch2.length_enabled << 6;
+	}
+
+
+	//******* CHANNEL 3
+	case 0xFF1A: {
+		return (ch3.dac_enabled << 7) | 0x7F;
+
+	}
+	case 0xFF1B: {
+		return 0xFF; // write only
+	}
+	case 0xFF1C: {
+		return (ch3.output_level << 5) | 0x9F;
+	}
+	case 0xFF1D: {
+		return 0xFF; //write only
+	}
+	case 0xFF1E: {
+		return (ch3.length_enabled << 6) | 0xBF;
+	}
+
 	}
 }
 
@@ -73,6 +111,12 @@ void APU::write(word address, byte data) {
 			//turning off need to reset
 		}
 		audio_enabled = new_power;
+		return;
+	}
+
+	if (address >= 0xFF30 && address <= 0xFF3F) {
+		word local_address = address - 0xFF30;
+		ch3.wave_ram[local_address] = data;
 		return;
 	}
 
@@ -124,7 +168,62 @@ void APU::write(word address, byte data) {
 	}
 
 
+	//******* CHANNEL 2
+	case 0xFF16: {
+		ch2.duty = (data & 0xC0) >> 6;
+		ch2.length_timer = (data & 0x3F);
+		return;
+	}
+	case 0xFF17: {
+		ch2.initial_volume = (data & 0xF0) >> 4;
+		ch2.envelope_increase = (data & 0x8) >> 3;
 
+		ch2.dac_enabled = (data & 0xF8) != 0; // any of the top 5 bits nonzero = DAC on
+		if (!ch2.dac_enabled) ch2.enabled = false; // DAC off immediately silences the channel
+
+		return;
+	}
+	case 0xFF18: {
+		ch2.period_low = data;
+		return;
+	}
+	case 0xFF19: {
+		ch2.period_high = data & 0x7;
+		ch2.length_enabled = (data & 0x40) >> 6;
+		if (data & 0x80) {
+			ch2.trigger();
+		}
+		return;
+	}
+
+
+	//******* CHANNEL 3
+	case 0xFF1A: {
+		ch3.dac_enabled = data & 0x80;
+		return;
+	}
+	case 0xFF1B: {
+		ch3.inital_length_timer = data;
+		ch3.length_timer = 256 - data;
+		return;
+
+	}
+	case 0xFF1C: {
+		ch3.output_level = (data & 0x60) >>5;
+		return;
+	}
+	case 0xFF1D: {
+		ch3.period_low = data;
+		return;
+	}
+	case 0xFF1E: {
+		ch3.period_high = data & 0x7;
+		ch3.length_enabled = (data & 0x40) >> 6;
+		if (data & 0x80) {
+			ch3.trigger();
+		}
+		return;
+	}
 
 	}
 
@@ -135,6 +234,7 @@ void APU::tick(word t_cycles) {
 
 	ch1.tick(t_cycles);
 	ch2.tick(t_cycles);
+	ch3.tick(t_cycles);
 
 	bool current_div_bit = (timer.DIV & 0x10) != 0;
 
@@ -158,6 +258,7 @@ void APU::step_frame_sequencer() {
 	if (frame_sequencer_step % 2 == 0) {
 		ch1.tick_length();
 		ch2.tick_length();
+		ch3.tick_length();
 	}
 	if (frame_sequencer_step == 2 || frame_sequencer_step == 6) {
 		ch1.tick_sweep();
@@ -171,8 +272,11 @@ void APU::step_frame_sequencer() {
 void APU::generate_sample() {
 
 	byte ch1_out = ch1.get_output(); // 0-15
-	//byte ch2_out = ch2.get_output();
-	byte ch2_out = 0;
+	byte ch2_out = ch2.get_output();
+	byte ch3_out = ch3.get_output();
+	
+	ch1_out = 0;
+	ch2_out = 0;
 
 	// NR51 panning
 	float left = 0.0f, right = 0.0f;
@@ -180,6 +284,8 @@ void APU::generate_sample() {
 	if (NR51 & 0x01) right += ch1_out; // CH1 right
 	if (NR51 & 0x20) left += ch2_out; // CH2 left
 	if (NR51 & 0x02) right += ch2_out; // CH2 right
+	if (NR51 & 0x40) left += ch3_out; // CH3 left
+	if (NR51 & 0x04) right += ch3_out; // CH3 right
 
 	// normalize 0-15 range to -1.0...1.0, and scale by NR50 master volume
 	byte left_vol = (NR50 >> 4) & 0x07;
@@ -322,5 +428,58 @@ void SquareChannel::trigger() {
 
 	if (sweep_step != 0) {
 		compute_sweep(); // result not saved but can disable channel
+	}
+}
+
+
+
+// wave channel
+
+void WaveChannel::tick(word t_cycles) {
+	if (!enabled) return;
+	period_timer -= t_cycles;
+	while (period_timer <= 0) {
+		period_timer += (2048 - period) * 2; // 2, not 4 like ch1 and ch2
+		period = get_written_period();
+		waveform_position = (waveform_position + 1) % 32; 
+	}
+}
+
+byte WaveChannel::get_output() {
+	if (!enabled || !dac_enabled) return 0;
+
+	byte byte_index = waveform_position / 2;
+	bool upper_nibble = (waveform_position % 2 == 0);
+	byte raw_sample = 0;
+
+	if (upper_nibble) {
+		raw_sample = (wave_ram[byte_index] >> 4) & 0x0F;
+	}
+	else {
+		raw_sample = wave_ram[byte_index] & 0x0F;
+	}
+
+	switch (output_level) {
+	case 0: return 0;               // mute
+	case 1: return raw_sample;      // 100%
+	case 2: return raw_sample >> 1; // 50%
+	case 3: return raw_sample >> 2; // 25%
+	}
+	return 0;
+
+}
+
+void WaveChannel::trigger() {
+	enabled = dac_enabled;
+	if (length_timer == 0) length_timer = 256;
+	period_timer = (2048 - period) * 2;
+	waveform_position = 1;
+}
+
+void WaveChannel::tick_length() {
+	if (!length_enabled) return;
+	if (length_timer > 0) {
+		length_timer--;
+		if (length_timer == 0) enabled = false;
 	}
 }
