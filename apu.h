@@ -70,7 +70,7 @@ public:
 
 	bool dac_enabled = false; //NR30 bit 7
 	byte inital_length_timer = 0; //NR31
-	byte length_timer = 0; // the actual live countdown, dec 256Hz
+	word length_timer = 0; // the actual live countdown, dec 256Hz has to go to 256 so needs to be a word
 	byte output_level = 0; // NR32 bits 5-6
 
 	byte period_low = 0; // NR33
@@ -80,7 +80,7 @@ public:
 	bool enabled = false;
 
 	void trigger();
-	void tick(word t_clycles);
+	void tick(word t_cycles);
 	byte get_output();
 	std::vector<byte>wave_ram;
 
@@ -93,6 +93,43 @@ private:
 	int period_timer = 0;
 
 	byte waveform_position = 0;
+
+};
+
+class NoiseChannel {
+
+public:
+	bool dac_enabled = false;
+
+	byte inital_length_timer = 0; //NR41 bits 0-5
+	byte length_timer = 0; 
+
+	byte initial_volume = 0;    // NR42 bits 4-7
+	bool envelope_increase = false; // NR42 bit 3
+	byte envelope_pace = 0;     // NR42 bits 0-2
+	byte current_volume = 0;   
+	byte envelope_timer = 0;   
+
+	
+	byte clock_shift = 0; //NR43 bits 4-7
+	bool is_15_bit = false; //NR43 bit 3
+	byte clock_divider = 0; //NR43 bits 0-2
+
+
+	bool length_enabled = false; //NR44 bit 6
+	bool enabled = false;
+
+	void trigger();
+	void tick(word t_cycles);
+	void tick_envelope();     
+	void tick_length();       
+
+	byte get_output();
+
+private:
+
+	word lfsr = 0; 
+	int period_timer = 0;
 
 };
 
@@ -124,6 +161,7 @@ private:
 	SquareChannel ch1;
 	PulseChannel ch2;
 	WaveChannel ch3;
+	NoiseChannel ch4;
 
 
 	byte frame_sequencer_step = 0;

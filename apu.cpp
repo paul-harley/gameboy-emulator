@@ -2,7 +2,6 @@
 #include <iostream>
 
 
-// FF10 - FF3F
 // general apu functions
 
 APU::APU(Timer& timer) : timer(timer) {
@@ -99,6 +98,21 @@ byte APU::read(word address) {
 		return (ch3.length_enabled << 6) | 0xBF;
 	}
 
+
+	//******* CHANNEL 4
+	case 0xFF20: {
+		return 0xFF; // write only
+	}
+	case 0xFF21: {
+		return (ch4.initial_volume << 4) | (ch4.envelope_increase << 3) | ch4.envelope_pace;
+	}
+	case 0xFF22: {
+		return (ch4.clock_shift << 4) | (!ch4.is_15_bit << 3) | ch4.clock_divider;
+	}
+	case 0xFF23: {
+		return (ch4.length_enabled << 6) | 0xBF; // unused float high
+	}
+
 	}
 }
 
@@ -141,13 +155,13 @@ void APU::write(word address, byte data) {
 	}
 	case 0xFF11: {
 		ch1.duty = (data & 0xC0) >> 6;
-		ch1.length_timer = (data & 0x3F);
+		ch1.length_timer = 64 - (data & 0x3F);
 		return;
 	}
 	case 0xFF12: {
 		ch1.initial_volume = (data & 0xF0) >> 4;
 		ch1.envelope_increase = (data & 0x8) >> 3;
-		ch1.sweep_pace = (data & 0x7);
+		ch1.envelope_pace = (data & 0x7);
 
 		ch1.dac_enabled = (data & 0xF8) != 0; // any of the top 5 bits nonzero = DAC on
 		if (!ch1.dac_enabled) ch1.enabled = false; // DAC off immediately silences the channel
@@ -170,13 +184,14 @@ void APU::write(word address, byte data) {
 
 	//******* CHANNEL 2
 	case 0xFF16: {
-		ch2.duty = (data & 0xC0) >> 6;
-		ch2.length_timer = (data & 0x3F);
+		ch1.duty = (data & 0xC0) >> 6;
+		ch1.length_timer = 64 - (data & 0x3F);
 		return;
 	}
 	case 0xFF17: {
 		ch2.initial_volume = (data & 0xF0) >> 4;
 		ch2.envelope_increase = (data & 0x8) >> 3;
+		ch2.envelope_pace = data & 0x7; 
 
 		ch2.dac_enabled = (data & 0xF8) != 0; // any of the top 5 bits nonzero = DAC on
 		if (!ch2.dac_enabled) ch2.enabled = false; // DAC off immediately silences the channel
@@ -225,6 +240,36 @@ void APU::write(word address, byte data) {
 		return;
 	}
 
+	
+	//******* CHANNEL 4
+	case 0xFF20: {
+		ch4.inital_length_timer = data & 0x3F; 
+		ch4.length_timer = 64 - (data & 0x3F);
+		return;
+	}
+	case 0xFF21: {
+		ch4.initial_volume = (data >> 4) & 0x0F;
+		ch4.envelope_increase = (data & 0x08) != 0;
+		ch4.envelope_pace = data & 0x07;
+		ch4.dac_enabled = (data & 0xF8) != 0;
+		if (!ch4.dac_enabled) ch4.enabled = false;
+		return;
+	}
+	case 0xFF22: {
+		ch4.clock_shift = (data >> 4) & 0x0F;
+		ch4.is_15_bit = !(data & 0x08); // NR43 bit 3: 0=15-bit, 1=7-bit
+		ch4.clock_divider = data & 0x07;
+		return;
+	}
+	case 0xFF23: {
+		ch4.length_enabled = (data & 0x40) != 0;
+
+		if (data & 0x80) {
+			ch4.trigger();
+		}
+		return;
+	}
+
 	}
 
 }
@@ -235,6 +280,7 @@ void APU::tick(word t_cycles) {
 	ch1.tick(t_cycles);
 	ch2.tick(t_cycles);
 	ch3.tick(t_cycles);
+	ch4.tick(t_cycles);
 
 	bool current_div_bit = (timer.DIV & 0x10) != 0;
 
@@ -259,6 +305,7 @@ void APU::step_frame_sequencer() {
 		ch1.tick_length();
 		ch2.tick_length();
 		ch3.tick_length();
+		ch4.tick_length();
 	}
 	if (frame_sequencer_step == 2 || frame_sequencer_step == 6) {
 		ch1.tick_sweep();
@@ -266,6 +313,7 @@ void APU::step_frame_sequencer() {
 	if (frame_sequencer_step == 7) {
 		ch1.tick_envelope();
 		ch2.tick_envelope();
+		ch4.tick_envelope();
 	}
 }
 
@@ -274,9 +322,8 @@ void APU::generate_sample() {
 	byte ch1_out = ch1.get_output(); // 0-15
 	byte ch2_out = ch2.get_output();
 	byte ch3_out = ch3.get_output();
-	
-	ch1_out = 0;
-	ch2_out = 0;
+	byte ch4_out = ch4.get_output();
+
 
 	// NR51 panning
 	float left = 0.0f, right = 0.0f;
@@ -286,6 +333,8 @@ void APU::generate_sample() {
 	if (NR51 & 0x02) right += ch2_out; // CH2 right
 	if (NR51 & 0x40) left += ch3_out; // CH3 left
 	if (NR51 & 0x04) right += ch3_out; // CH3 right
+	if (NR51 & 0x80) left += ch4_out; // CH4 left
+	if (NR51 & 0x08) right += ch4_out; // CH4 right
 
 	// normalize 0-15 range to -1.0...1.0, and scale by NR50 master volume
 	byte left_vol = (NR50 >> 4) & 0x07;
@@ -295,6 +344,7 @@ void APU::generate_sample() {
 	// rough mixing for now, will clean it later with the docs
 	left = (left / 15.0f) * ((left_vol + 1) / 8.0f);
 	right = (right / 15.0f) * ((right_vol + 1) / 8.0f);
+
 
 	sample_buffer.push_back(left);
 	sample_buffer.push_back(right);
@@ -321,6 +371,7 @@ void PulseChannel::trigger() {
 
 	if (length_timer == 0) length_timer = 64;
 	period_timer = (2048 - period) * 4;
+	period = get_written_period();
 	envelope_timer = envelope_pace;
 	current_volume = initial_volume;
 
@@ -335,7 +386,9 @@ void PulseChannel::tick_envelope() {
 		envelope_timer = envelope_pace;
 		if (envelope_increase && current_volume < 15) current_volume++;
 
-		else if (!envelope_increase && current_volume > 0) current_volume--;
+		else if (!envelope_increase && current_volume > 0) {
+			current_volume--;
+		}
 	}
 }
 
@@ -478,6 +531,77 @@ void WaveChannel::trigger() {
 
 void WaveChannel::tick_length() {
 	if (!length_enabled) return;
+	if (length_timer > 0) {
+		length_timer--;
+		if (length_timer == 0) enabled = false;
+	}
+}
+
+
+
+// noise channel
+
+void NoiseChannel::tick(word t_cycles) {
+	if (!enabled) return;
+
+	period_timer -= t_cycles;
+	while (period_timer <= 0) {
+		static const int divisor_table[8] = { 8, 16, 32, 48, 64, 80, 96, 112 };
+		int divisor = divisor_table[clock_divider];
+		period_timer += divisor << clock_shift;
+
+		// clock the LFSR
+		bool bit0 = lfsr & 0x01;
+		bool bit1 = (lfsr >> 1) & 0x01;
+		bool new_bit = (bit0 == bit1);
+
+		lfsr >>= 1;
+		lfsr |= (new_bit << 14); // feed into bit 14 (top of 15-bit mode)
+
+		if (is_15_bit) { // actually "7-bit" mode per NR43 bit meaning
+			lfsr = (lfsr & ~0x40) | (new_bit << 6); // also feed into bit 6
+		}
+
+	}
+}
+
+byte NoiseChannel::get_output() {
+	if (!enabled || !dac_enabled) return 0;
+
+	if (lfsr & 0x01) {
+		return 0;
+	}
+	else {
+		return current_volume;
+	}
+}
+
+void NoiseChannel::trigger() {
+	enabled = dac_enabled;
+
+	if (length_timer == 0) length_timer = 64;
+	envelope_timer = envelope_pace;
+	current_volume = initial_volume;
+	lfsr = 0;
+}
+
+// taken straight from pulse class
+void NoiseChannel::tick_envelope() {
+	if (envelope_pace == 0) return;
+
+	if (envelope_timer > 0) envelope_timer--;
+
+	if (envelope_timer == 0) {
+		envelope_timer = envelope_pace;
+		if (envelope_increase && current_volume < 15) current_volume++;
+
+		else if (!envelope_increase && current_volume > 0) current_volume--;
+	}
+}
+
+void NoiseChannel::tick_length() {
+	if (!length_enabled) return;
+
 	if (length_timer > 0) {
 		length_timer--;
 		if (length_timer == 0) enabled = false;
