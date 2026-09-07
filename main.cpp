@@ -26,10 +26,9 @@ int main() {
 
 
 
-
-	Gameboy gb;
-    gb.load_rom(alleyway_name);
-    gb.run();
+    std::unique_ptr<Gameboy> gb = std::make_unique<Gameboy>();
+    gb->load_rom(pokemon_Gold_name);
+    gb->run();
 
 	return 0;
 }

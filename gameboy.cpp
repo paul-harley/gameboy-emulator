@@ -22,7 +22,9 @@ void Gameboy::run() {
     bool running = true;
     SDL_Event event;
 
-    static int frame_count = 0;
+    const double target_fps = 59.7275;
+    const auto frame_duration = std::chrono::duration<double>(1.0 / target_fps);
+    auto next_frame_time = std::chrono::steady_clock::now();
 
 
 
@@ -111,10 +113,21 @@ void Gameboy::run() {
             bus.ppu.frame_ready = false;
 
             if (!apu.sample_buffer.empty()) {
+
+                // if backlog exceeds 3 frames drop it and resync
+                Uint32 queued = SDL_GetAudioStreamQueued(apu.audio_stream);
+                const Uint32 max_queued_bytes = 44100 * 2 * sizeof(float) * 3 / 60;
+                if (queued > max_queued_bytes) {
+                    SDL_ClearAudioStream(apu.audio_stream);
+                }
+
                 SDL_PutAudioStreamData(apu.audio_stream, apu.sample_buffer.data(),
                     apu.sample_buffer.size() * sizeof(float));
                 apu.sample_buffer.clear();
             }
+
+            next_frame_time += std::chrono::duration_cast<std::chrono::steady_clock::duration>(frame_duration);
+            std::this_thread::sleep_until(next_frame_time);
         }
 
 		count++;

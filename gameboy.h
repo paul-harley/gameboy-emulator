@@ -7,6 +7,9 @@
 #include "timer.h"
 #include "apu.h"
 
+#include <chrono> // these 2 are used to keep everything at correct timings
+#include <thread>
+
 #include <fstream>
 #include <iomanip>
 
