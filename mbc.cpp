@@ -21,6 +21,32 @@ void MBC::init_ram_size(byte ram_size_byte) {
 
 }
 
+void MBC::set_battery_save_path(const std::string& path) {
+	battery_save_path = path;
+}
+
+void MBC::load_battery_save() {
+
+	if (battery_save_path.empty() || ext_ram.empty()) return;
+
+	std::ifstream in(battery_save_path, std::ios::binary);
+	if (in) {
+		in.read(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+		std::cout << "Loaded battery save from " << battery_save_path << "\n";
+	}
+
+}
+
+void MBC::save_battery_save() {
+	if (battery_save_path.empty() || ext_ram.empty()) return;
+
+	std::ofstream out(battery_save_path, std::ios::binary);
+	if (out) {
+		out.write(reinterpret_cast<char*>(ext_ram.data()), ext_ram.size());
+	}
+
+}
+
 
 // ********** MBC NONE **********
 

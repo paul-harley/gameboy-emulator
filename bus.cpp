@@ -291,6 +291,16 @@ void Bus::load_rom(const std::string filename) {
 	byte cart_type = rom_data[0x0147];
 	set_mbc(cart_type);
 
+	std::filesystem::path rom_path(filename);
+	std::filesystem::path saves_dir = "saves";
+	if (!std::filesystem::exists(saves_dir)) {
+		std::filesystem::create_directory(saves_dir);
+	}
+	std::string battery_path = (saves_dir / (rom_path.stem().string() + ".sav")).string();
+
+	mbc->set_battery_save_path(battery_path);
+	mbc->load_battery_save();
+
 
 	std::cout << "ROM LOADED!\n";
 

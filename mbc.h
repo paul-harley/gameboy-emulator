@@ -30,12 +30,18 @@ public:
 	virtual void deserialize(std::ifstream& in) = 0;
 
 
+	void set_battery_save_path(const std::string& path);
+	void load_battery_save();
+	void save_battery_save();
+
+
 protected:
 	// same functionality across all mbcs
 
 	bool ram_enabled = false;
 	byte rom_num_banks = 2;
 	byte rom_bank_mask = 0;
+	std::string battery_save_path;
 
 	void ram_enable_write(byte data) {
 		ram_enabled = ((data & 0x0F) == 0x0A);

@@ -27,7 +27,7 @@ int main() {
 
 
     std::unique_ptr<Gameboy> gb = std::make_unique<Gameboy>();
-    gb->load_rom(pokemon_Gold_name);
+    gb->load_rom(f1_name);
     gb->run();
 
 	return 0;

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <filesystem>
 
 #include "types.h"
 #include "ppu.h"
@@ -57,10 +58,10 @@ private:
 	word fix_echo_address(word address);
 
 	byte boot_rom[256];
-	std::unique_ptr<MBC> mbc;
 	void set_mbc(byte cart_type);
 
 public:
+	std::unique_ptr<MBC> mbc;
 	word last_pc = 0;
 	byte* test_ram_override = nullptr;
 

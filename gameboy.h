@@ -13,6 +13,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include <filesystem>
+
 
 
 class Gameboy {
@@ -40,7 +42,14 @@ public:
 
 private:
 	std::ofstream log_file;
+	std::string current_rom_filename;
+	bool f5_held = false;
+	bool f9_held = false;
+
 	void log_state();
+	void poll_events(bool& running, SDL_Event& event, bool& logging_enabled);
 	void save_state(const std::string& path);
 	void load_state(const std::string& path);
+	std::string get_save_state_path(int slot);
+	sbyte get_save_slot(SDL_Event& event);
 };
