@@ -15,6 +15,14 @@ PPU::PPU(Bus& bus, Interrupts& interrupts) : bus(bus), interrupts(interrupts) {
 
 }
 
+void PPU::reset() {
+	ly = 0;
+	dot_counter = 0;
+	window_line_counter = 0;
+	current_mode = 2;
+	STAT = 0;
+}
+
 
 void PPU::tick(int cycles){
 

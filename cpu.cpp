@@ -18,11 +18,6 @@ word CPU::fetch_16() {
 }
 
 
-//TODO: just did all the cycles added
-// check each one for possible [hl] as it will be higher
-// only on reg8 ones 
-
-
  byte CPU::decode(byte instruction) {
 
 	// the blocks are based on https://gbdev.io/pandocs/CPU_Instruction_Set.html
@@ -685,4 +680,12 @@ void CPU::deserialize(std::ifstream& in) {
 	in.read(reinterpret_cast<char*>(&ime_pending), sizeof(ime_pending));
 	in.read(reinterpret_cast<char*>(&halted), sizeof(halted));
 	in.read(reinterpret_cast<char*>(&halted_bug), sizeof(halted_bug));
+}
+
+
+void CPU::reset() {
+	ime = false;
+	ime_pending = false;
+	halted = false;
+	halted_bug = false;
 }

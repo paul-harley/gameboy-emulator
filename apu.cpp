@@ -351,6 +351,10 @@ void APU::generate_sample() {
 
 }
 
+void APU::reset() {
+	frame_sequencer_step = 0;
+	prev_div_bit = false;
+}
 
 
 //pulse channel

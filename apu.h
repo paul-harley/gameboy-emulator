@@ -144,6 +144,8 @@ public:
 	void tick(word t_cycles);
 	void step_frame_sequencer();
 
+	void reset();
+
 	double cycles_per_sample = 4194304.0 / 44100.0; // ~95.1
 	double sample_accumulator = 0.0;
 	std::vector<float> sample_buffer;

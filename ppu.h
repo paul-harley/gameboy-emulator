@@ -92,6 +92,8 @@ public:
 
 	bool frame_ready = false; // to flush audio buffer every frame 
 
+	void reset();
+
 private:
 	uint32_t framebuffer[144][160];
 

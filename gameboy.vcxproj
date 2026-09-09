@@ -156,6 +156,7 @@
     <ClCompile Include="mbc.cpp" />
     <ClCompile Include="ppu.cpp" />
     <ClCompile Include="registers.cpp" />
+    <ClCompile Include="rom_picker.cpp" />
     <ClCompile Include="run_sm83_tests.cpp" />
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
@@ -170,6 +171,7 @@
     <ClInclude Include="mbc.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="registers.h" />
+    <ClInclude Include="rom_picker.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>

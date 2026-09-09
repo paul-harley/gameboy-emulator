@@ -1,35 +1,6 @@
 #include "timer.h"
 #include <iostream>
 
-/*
-void Timer::tick(byte cycles) {
-
-	div_counter += cycles;
-
-	if (div_counter >= 256) {
-		div_counter -= 256;
-		DIV++;
-	}
-
-	word inc_period = get_tac_period();
-	if (inc_period == 0) return;
-
-
-	tima_counter += cycles;
-
-	if (tima_counter >= inc_period) {
-		tima_counter -= inc_period;
-		TIMA++;
-
-		if (TIMA > 0xFF) {
-			TIMA = TMA;
-			interrupts.request(Timer_i);
-		}
-	}
-
-}
-*/
-
 void Timer::tick(byte cycles) {
 	for (int i = 0; i < cycles; i++) { 
 
@@ -106,4 +77,14 @@ void Timer::deserialize(std::ifstream& in) {
 	in.read(reinterpret_cast<char*>(&TAC), sizeof(TAC));
 	in.read(reinterpret_cast<char*>(&system_counter), sizeof(system_counter));
 	in.read(reinterpret_cast<char*>(&overflow_pending), sizeof(overflow_pending));
+}
+
+
+void Timer::reset() {
+	DIV = 0;
+	TIMA = 0;
+	TMA = 0;
+	TAC = 0;
+	system_counter = 0;
+	overflow_pending = false;
 }

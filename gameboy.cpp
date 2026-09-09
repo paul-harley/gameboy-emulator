@@ -1,4 +1,6 @@
 #include "gameboy.h"
+#include "rom_picker.h"
+
 
 void Gameboy::load_rom(const std::string& path) {
 
@@ -9,8 +11,13 @@ void Gameboy::load_rom(const std::string& path) {
         cpu.regs.regs_8b[C] = cpu.regs.regs_8b[D] = cpu.regs.regs_8b[E] = cpu.regs.regs_8b[H]
         = cpu.regs.regs_8b[L] = 0x0000;
 
+    bus.ppu.reset();
+    timer.reset();
+    interrupts.reset();
+    apu.reset();
+    cpu.reset();
+
 	bus.load_rom(path);
-	//cpu.regs.PC = 0x100;
 }
 
 void Gameboy::run() {
@@ -34,6 +41,24 @@ void Gameboy::run() {
 	while (running) {
 
         poll_events(running, event, logging_enabled);
+
+        {
+            std::lock_guard<std::mutex> lock(rom_load_mutex);
+            if (pending_rom_path.has_value()) {
+                load_rom(pending_rom_path.value());
+                pending_rom_path.reset();
+                rom_loaded = true;
+
+                // TODO: reset CPU/PPU/timer/interrupts to power-on state here,
+                // same as whatever your constructor/initial load already does,
+                // so swapping ROMs mid-session behaves like a fresh launch
+            }
+        }
+
+        if (!rom_loaded) {
+            continue;
+        }
+
 
         if (logging_enabled) log_state();
 
@@ -141,7 +166,13 @@ void Gameboy::poll_events(bool& running, SDL_Event& event,  bool& logging_enable
 
             case SDLK_F5: f5_held = pressed; break;
             case SDLK_F9: f9_held = pressed; break;
-
+            
+            case SDLK_F2: {
+                if (pressed && !event.key.repeat) {
+                    show_rom_picker(this, bus.ppu.window);
+                }
+                break;
+            }
 
             case SDLK_1: case SDLK_2: case SDLK_3: case SDLK_4: case SDLK_5:
             case SDLK_6: case SDLK_7: case SDLK_8: case SDLK_9: case SDLK_0:

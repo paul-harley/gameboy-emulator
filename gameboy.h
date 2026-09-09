@@ -15,12 +15,18 @@
 
 #include <filesystem>
 
+#include <mutex>
+#include <optional>
+
 
 
 class Gameboy {
 
 
 public:
+	std::mutex rom_load_mutex;
+	std::optional<std::string> pending_rom_path;
+
 	Interrupts interrupts;
 	Joypad joypad;
 	Bus bus;      
@@ -52,4 +58,6 @@ private:
 	void load_state(const std::string& path);
 	std::string get_save_state_path(int slot);
 	sbyte get_save_slot(SDL_Event& event);
+
+	bool rom_loaded = false;
 };

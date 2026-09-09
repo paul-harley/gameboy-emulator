@@ -21,3 +21,8 @@ void Interrupts::deserialize(std::ifstream& in) {
 	in.read(reinterpret_cast<char*>(&IE), sizeof(IE));
 	in.read(reinterpret_cast<char*>(&IF), sizeof(IF));
 }
+
+void Interrupts::reset() {
+	IE = 0;
+	IF = 0;
+}

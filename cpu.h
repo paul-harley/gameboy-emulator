@@ -44,6 +44,8 @@ public:
 	void serialize(std::ofstream& out);
 	void deserialize(std::ifstream& in);
 
+	void reset();
+
 
 private:
 
