@@ -52,7 +52,7 @@ private:
 
 	std::array<MemoryRegion*, 9> main_memory = { &rom_bank0, &rom_bank1, &vram, &external_ram,
 		&wram, &oam, &io_registers, &hram, &ie_register };
-
+		
 	MemoryRegion* get_correct_memory(word address);
 
 	word fix_echo_address(word address);
@@ -64,6 +64,8 @@ public:
 	std::unique_ptr<MBC> mbc;
 	word last_pc = 0;
 	byte* test_ram_override = nullptr;
+	byte current_vram_bank = 0;
+	byte current_wram_bank = 1;
 
 	Joypad& joypad;
 	Interrupts& interrupts;
@@ -76,7 +78,10 @@ public:
 		timer(timer),
 		apu(apu),
 		ppu(*this, interrupts)
-	{}
+	{
+		vram.memory.resize(16 * 1024, 0);
+		wram.memory.resize(32 * 1024, 0);
+	}
 
 	PPU ppu;
 

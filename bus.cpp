@@ -104,8 +104,19 @@ byte Bus::read_memory(word address) {
 
 	address = fix_echo_address(address);
 
-
 	const MemoryRegion* mem_region = get_correct_memory(address);
+
+	// special case as vram has switchable banks
+	if (address >= 0x8000 && address <= 0x9FFF) {
+		size_t offset = (size_t)current_vram_bank * 0x1000 + (address - 0x8000);
+		return mem_region->memory[offset];
+	}
+	
+	// wram the same
+	if (address >= 0xD000 && address <= 0xDFFF) {
+		size_t offset = (size_t)current_wram_bank * 0x1000 + (address - 0xD000);
+		return mem_region->memory[offset];
+	}
 
 	word local_address = address - mem_region->start_address;
 	return mem_region->memory[local_address];
@@ -218,6 +229,18 @@ void Bus::write_memory(word address, byte data) {
 		ppu.WX = data;
 		return;
 
+	case 0xFF4F: {
+		current_vram_bank = data & 0x07;
+		return;
+	}
+
+	case 0xFF70: {
+		byte bank = data & 0x07;
+		if (bank == 0) bank = 1;
+		current_wram_bank = bank;
+		return;
+	}
+
 	case 0xFF0F:
 		interrupts.IF = data & 0x1F;
 		return;
@@ -229,8 +252,22 @@ void Bus::write_memory(word address, byte data) {
 
 	address = fix_echo_address(address);
 
-
 	MemoryRegion* mem_region = get_correct_memory(address);
+
+	// special case as vram has switchable banks
+	if (address >= 0x8000 && address <= 0x9FFF) {
+		size_t offset = (size_t)current_vram_bank * 0x1000 + (address - 0x8000);
+		mem_region->memory[offset] = data;
+		return;
+	}
+
+	// wram has same switchable banks
+	if (address >= 0xD000 && address <= 0xDFFF) {
+		size_t offset = (size_t)current_wram_bank * 0x1000 + (address - 0xD000);
+		mem_region->memory[offset] = data;
+		return;
+	}
+
 	word local_address = address - mem_region->start_address;
 	mem_region->memory[local_address] = data;
 
