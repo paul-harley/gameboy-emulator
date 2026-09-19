@@ -4,7 +4,10 @@
 
 void Gameboy::load_rom(const std::string& path) {
 
-    bus.load_boot_rom("roms/boot_rom.bin");
+    //bus.load_boot_rom("roms/boot_rom.bin", 256);
+    bus.load_boot_rom("roms/cgb0_boot.bin", 0x900);
+
+
     cpu.regs.PC = 0x0000;         // start at the real reset vector, not 0x0100
     cpu.regs.SP = 0x0000;         // boot rom sets this itself
     cpu.regs.regs_8b[A] = cpu.regs.regs_8b[F] = cpu.regs.regs_8b[B] =
@@ -49,9 +52,8 @@ void Gameboy::run() {
                 pending_rom_path.reset();
                 rom_loaded = true;
 
-                // TODO: reset CPU/PPU/timer/interrupts to power-on state here,
-                // same as whatever your constructor/initial load already does,
-                // so swapping ROMs mid-session behaves like a fresh launch
+                // TODO: reset CPU/PPU/timer/interrupts to power-on state here
+
             }
         }
 

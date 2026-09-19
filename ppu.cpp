@@ -103,6 +103,28 @@ std::array<byte, 16> PPU::get_tile_data(word tile_bp, byte index) {
 
 }
 
+std::array<byte, 16> PPU::get_tile_data(byte bank, word tile_bp, byte index) {
+
+	std::array<byte, 16> tile_data;
+
+	word tile_address;
+
+	if (tile_bp == 0x8000) {
+		tile_address = tile_bp + (index * 16);
+	}
+	else {
+		sbyte signed_index = static_cast<sbyte>(index);
+		tile_address = tile_bp + (signed_index * 16);
+	}
+
+	for (int i = 0; i < 16; i++) {
+		tile_data[i] = bus.read_vram_bank(bank, tile_address + i);
+	}
+
+	return tile_data;
+
+}
+
 tile PPU::decode_tile(const std::array<byte, 16>& tile_data) {
 
 	tile pixel_data;
@@ -180,7 +202,7 @@ void PPU::set_rend_col(colour col) {
 
 void PPU::render_row_bg(byte ly) {
 
-	if (!(LCDC & 0x01)) {
+	if (!bus.is_gbc && !(LCDC & 0x01)) {
 		for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
 			bg_window_color[ly][screen_x] = 0;
 			framebuffer[ly][screen_x] = to_pixel(bg_palette.colour0);
@@ -200,6 +222,8 @@ void PPU::render_row_bg(byte ly) {
 
 	byte last_tile_col = 0xFF; //forces first decode
 	tile decoded;
+	byte GBC_attributes = 0;
+
 
 
 	for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
@@ -212,6 +236,15 @@ void PPU::render_row_bg(byte ly) {
 			word map_offset = tile_row * 32 + tile_col;
 			byte tile_id = bus.read_memory(map_bp + map_offset);
 
+			byte data_bank = 0;
+			if (bus.is_gbc) {
+				GBC_attributes = bus.read_vram_bank(1, map_bp + map_offset);
+
+				if (GBC_attributes & 0x08) {
+					data_bank = 1;
+				}
+			}
+
 			std::array<byte, 16> tile_data = get_tile_data(tile_id);
 			decoded = decode_tile(tile_data);
 
@@ -221,7 +254,14 @@ void PPU::render_row_bg(byte ly) {
 		// drawing
 		byte color_index = decoded[px_y][px_x];
 		bg_window_color[ly][screen_x] = color_index;
-		framebuffer[ly][screen_x] = to_pixel(bg_palette.get_current_colour(color_index));
+
+		if (bus.is_gbc) {
+			byte palette_num = GBC_attributes & 0x07;
+			framebuffer[ly][screen_x] = cgb_bg_color_to_pixel(palette_num, color_index);
+		}
+		else {
+			framebuffer[ly][screen_x] = to_pixel(bg_palette.get_current_colour(color_index));
+		}
 	}
 
 }
@@ -311,6 +351,62 @@ void PPU::render_row_sprites(byte ly){
 
 
 }
+
+
+// BG GBC functions
+
+void PPU::write_bgpi(byte data) {
+	bgpi_index = data & 0x3F;
+	bgpi_auto_increment = (data & 0x80) != 0;
+}
+
+byte PPU::read_bgpi() {
+	return bgpi_index | (bgpi_auto_increment << 7) | 0x40;
+}
+
+void PPU::write_bgpd(byte data) {
+
+	if (current_mode != 3) {
+		bg_palette_ram[bgpi_index] = data;
+	}
+	if (bgpi_auto_increment) { // increments even if the write above was rejected
+		bgpi_index = (bgpi_index + 1) & 0x3F;
+	}
+}
+
+byte PPU::read_bgpd() {
+	if (current_mode == 3) return 0xFF;
+	return bg_palette_ram[bgpi_index];
+
+}
+
+
+// OBJ GBC functions
+
+void PPU::write_obpi(byte data) {
+	obpi_index = data & 0x3F;
+	obpi_auto_increment = (data & 0x80) != 0;
+}
+
+byte PPU::read_obpi() {
+	return obpi_index | (obpi_auto_increment << 7) | 0x40;
+}
+
+void PPU::write_obpd(byte data) {
+	if (current_mode != 3) {
+		obj_palette_ram[obpi_index] = data;
+	}
+	if (obpi_auto_increment) {
+		obpi_index = (obpi_index + 1) & 0x3F;
+	}
+}
+
+byte PPU::read_obpd() {
+	if (current_mode == 3) return 0xFF;
+	return obj_palette_ram[obpi_index];
+}
+
+
 
 
 void PPU::sort_sprites_x(std::vector<word>& sprites){
@@ -445,7 +541,6 @@ bool PPU::can_draw_window(byte ly) {
 	return true;
 }
 
-
 uint32_t PPU::to_pixel(colour c) {
 	byte r = std::get<0>(c);
 	byte g = std::get<1>(c);
@@ -453,6 +548,26 @@ uint32_t PPU::to_pixel(colour c) {
 	byte a = std::get<3>(c);
 	return (a << 24) | (r << 16) | (g << 8) | b;
 }
+
+uint32_t PPU::cgb_bg_color_to_pixel(byte palette_num, byte color_index) {
+
+	size_t offset = palette_num * 8 + color_index * 2;
+	byte lo = bg_palette_ram[offset];
+	byte hi = bg_palette_ram[offset + 1];
+	word raw = lo | (hi << 8);
+
+	byte r5 = raw & 0x1F;
+	byte g5 = (raw >> 5) & 0x1F;
+	byte b5 = (raw >> 10) & 0x1F;
+
+	byte r8 = (r5 * 255) / 31;
+	byte g8 = (g5 * 255) / 31;
+	byte b8 = (b5 * 255) / 31;
+
+	return (0xFF << 24) | (r8 << 16) | (g8 << 8) | b8;
+
+}
+
 
 
 

@@ -52,7 +52,29 @@ public:
 
 	std::array<byte, 16> get_tile_data(byte index);
 	std::array<byte, 16> get_tile_data(word tile_base_pointer, byte index);
+	std::array<byte, 16> get_tile_data(byte bank, word tile_base_pointer, byte index);
+
 	tile decode_tile(const std::array<byte, 16>& tile_data);
+
+	// bg gbc requirements
+	byte bg_palette_ram[64] = { 0 };
+	byte bgpi_index = 0;
+	bool bgpi_auto_increment = false;
+	void write_bgpi(byte data);
+	byte read_bgpi();
+	void write_bgpd(byte data);
+	byte read_bgpd();
+
+	// obj gbc requirements
+	byte obj_palette_ram[64] = { 0 };
+	byte obpi_index = 0;
+	bool obpi_auto_increment = false;
+	void write_obpi(byte data);
+	byte read_obpi();
+	void write_obpd(byte data);
+	byte read_obpd();
+
+
 
 	byte LYC = 0;
 	byte STAT = 0;
@@ -117,5 +139,6 @@ private:
 
 	
 	uint32_t to_pixel(colour c);
+	uint32_t cgb_bg_color_to_pixel(byte palette_num, byte color_index);
 };
 

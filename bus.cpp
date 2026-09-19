@@ -28,8 +28,20 @@ MemoryRegion* Bus::get_correct_memory(word address) {
 byte Bus::read_memory(word address) {
 	if (test_ram_override) return test_ram_override[address];
 
-	if (boot_rom_enabled && address <= 0x00FF) {
-		return boot_rom[address];
+	if (boot_rom_enabled) {
+
+		if (is_gbc) {
+			if (address <= 0x00FF ||
+				(address >= 0x0200 && address <= 0x08FF)) {
+				return boot_rom[address];
+			}
+		}
+		else {
+			if (address <= 0x00FF) {
+				return boot_rom[address];
+			}
+		}
+
 	}
 
 	if (address <= 0x7FFF) {
@@ -95,6 +107,16 @@ byte Bus::read_memory(word address) {
 	case 0xFF4B:
 		return ppu.WX;
 
+	case 0xFF68: 
+		return ppu.read_bgpi();
+	case 0xFF69: 
+		return ppu.read_bgpd();
+	case 0xFF6A: 
+		return ppu.read_obpi();
+	case 0xFF6B: 
+		return ppu.read_obpd();
+
+
 	case 0xFF0F:
 		return interrupts.IF | 0xE0;
 	case 0xFFFF:
@@ -108,7 +130,7 @@ byte Bus::read_memory(word address) {
 
 	// special case as vram has switchable banks
 	if (address >= 0x8000 && address <= 0x9FFF) {
-		size_t offset = (size_t)current_vram_bank * 0x1000 + (address - 0x8000);
+		size_t offset = (size_t)current_vram_bank * 0x2000 + (address - 0x8000);
 		return mem_region->memory[offset];
 	}
 	
@@ -229,6 +251,19 @@ void Bus::write_memory(word address, byte data) {
 		ppu.WX = data;
 		return;
 
+	case 0xFF68:
+		ppu.write_bgpi(data);
+		return;
+	case 0xFF69: 
+		ppu.write_bgpd(data); 
+		return;
+	case 0xFF6A: 
+		ppu.write_obpi(data); 
+		return;
+	case 0xFF6B: 
+		ppu.write_obpd(data); 
+		return;
+
 	case 0xFF4F: {
 		current_vram_bank = data & 0x07;
 		return;
@@ -256,7 +291,7 @@ void Bus::write_memory(word address, byte data) {
 
 	// special case as vram has switchable banks
 	if (address >= 0x8000 && address <= 0x9FFF) {
-		size_t offset = (size_t)current_vram_bank * 0x1000 + (address - 0x8000);
+		size_t offset = (size_t)current_vram_bank * 0x2000 + (address - 0x8000);
 		mem_region->memory[offset] = data;
 		return;
 	}
@@ -271,6 +306,12 @@ void Bus::write_memory(word address, byte data) {
 	word local_address = address - mem_region->start_address;
 	mem_region->memory[local_address] = data;
 
+}
+
+
+byte Bus::read_vram_bank(byte bank, word address) {
+	size_t offset = (size_t)bank * 0x2000 + (address - 0x8000);
+	return main_memory[2]->memory[offset];
 }
 
 
@@ -381,7 +422,7 @@ void Bus::set_mbc(byte cart_type) {
 }
 
 
-void Bus::load_boot_rom(const std::string filename) {
+void Bus::load_boot_rom(const std::string filename, size_t expetced_size) {
 	std::ifstream rom(filename, std::ios::binary);
 
 	if (!rom) {
@@ -394,7 +435,7 @@ void Bus::load_boot_rom(const std::string filename) {
 	word address = 0;
 
 	while (rom.read(reinterpret_cast<char*>(&current_byte), 1)) {
-		if (address >= 256) {
+		if (address >= expetced_size) {
 			std::cout << "Boot ROM too large\n";
 			break;
 		}

@@ -57,13 +57,14 @@ private:
 
 	word fix_echo_address(word address);
 
-	byte boot_rom[256];
+	byte boot_rom[0x900];
 	void set_mbc(byte cart_type);
 
 public:
 	std::unique_ptr<MBC> mbc;
 	word last_pc = 0;
 	byte* test_ram_override = nullptr;
+	bool is_gbc = true;
 	byte current_vram_bank = 0;
 	byte current_wram_bank = 1;
 
@@ -94,10 +95,12 @@ public:
 
 	byte read_memory(word address);
 	void write_memory(word address, byte data);
+	byte read_vram_bank(byte bank, word address);
+
 	void dump_memory(word start_loc, byte num_bytes);
 	void load_rom(const std::string filename);
 	bool boot_rom_enabled = true;
-	void load_boot_rom(const std::string filename);
+	void load_boot_rom(const std::string filename, size_t expected_size);
 
 
 
