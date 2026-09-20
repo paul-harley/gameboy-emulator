@@ -140,5 +140,6 @@ private:
 	
 	uint32_t to_pixel(colour c);
 	uint32_t cgb_bg_color_to_pixel(byte palette_num, byte color_index);
+	uint32_t cgb_obj_color_to_pixel(byte palette_num, byte color_index);
 };
 

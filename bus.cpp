@@ -459,6 +459,9 @@ void Bus::serialize(std::ofstream& out) {
 	out.write(reinterpret_cast<char*>(&transfer_active), sizeof(transfer_active));
 	out.write(reinterpret_cast<char*>(&transfer_cycles_remaining), sizeof(transfer_cycles_remaining));
 
+	out.write(reinterpret_cast<char*>(&current_vram_bank), sizeof(current_vram_bank));
+	out.write(reinterpret_cast<char*>(&current_wram_bank), sizeof(current_wram_bank));
+
 	mbc->serialize(out); 
 }
 
@@ -472,6 +475,9 @@ void Bus::deserialize(std::ifstream& in) {
 	in.read(reinterpret_cast<char*>(&serial_control), sizeof(serial_control));
 	in.read(reinterpret_cast<char*>(&transfer_active), sizeof(transfer_active));
 	in.read(reinterpret_cast<char*>(&transfer_cycles_remaining), sizeof(transfer_cycles_remaining));
+
+	in.read(reinterpret_cast<char*>(&current_vram_bank), sizeof(current_vram_bank));
+	in.read(reinterpret_cast<char*>(&current_wram_bank), sizeof(current_wram_bank));
 
 	mbc->deserialize(in);
 }

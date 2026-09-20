@@ -200,6 +200,8 @@ void PPU::set_rend_col(colour col) {
 	SDL_SetRenderDrawColor(renderer, get<0>(col), get<1>(col), get<2>(col), get<3>(col));
 }
 
+// RENDERING
+
 void PPU::render_row_bg(byte ly) {
 
 	if (!bus.is_gbc && !(LCDC & 0x01)) {
@@ -234,7 +236,7 @@ void PPU::render_row_bg(byte ly) {
 
 		if (tile_col != last_tile_col) {
 			word map_offset = tile_row * 32 + tile_col;
-			byte tile_id = bus.read_memory(map_bp + map_offset);
+			byte tile_id = bus.read_vram_bank(0, map_bp + map_offset);
 
 			byte data_bank = 0;
 			if (bus.is_gbc) {
@@ -245,7 +247,7 @@ void PPU::render_row_bg(byte ly) {
 				}
 			}
 
-			std::array<byte, 16> tile_data = get_tile_data(tile_id);
+			std::array<byte, 16> tile_data = get_tile_data(data_bank, tile_bp, tile_id);
 			decoded = decode_tile(tile_data);
 
 			last_tile_col = tile_col;
@@ -266,7 +268,6 @@ void PPU::render_row_bg(byte ly) {
 
 }
 
-
 void PPU::render_row_win(byte ly) {
 
 	if (!can_draw_window(ly)) return;
@@ -281,6 +282,8 @@ void PPU::render_row_win(byte ly) {
 
 	byte last_tile_col = 0xFF;
 	tile decoded;
+	byte GBC_attributes = 0;
+
 
 
 	for (int screen_x = 0; screen_x < WINDOW_WIDTH; screen_x++) {
@@ -294,9 +297,18 @@ void PPU::render_row_win(byte ly) {
 		if (tile_col != last_tile_col) {
 
 			word map_offset = tile_row * 32 + tile_col;
-			byte tile_id = bus.read_memory(map_bp + map_offset);
+			byte tile_id = bus.read_vram_bank(0, map_bp + map_offset);
 
-			std::array<byte, 16> tile_data = get_tile_data(tile_id);
+			byte data_bank = 0;
+			if (bus.is_gbc) {
+				GBC_attributes = bus.read_vram_bank(1, map_bp + map_offset);
+
+				if (GBC_attributes & 0x08) {
+					data_bank = 1;
+				}
+			}
+
+			std::array<byte, 16> tile_data = get_tile_data(data_bank, tile_bp, tile_id);
 			decoded = decode_tile(tile_data);
 
 			last_tile_col = tile_col;
@@ -305,13 +317,18 @@ void PPU::render_row_win(byte ly) {
 		// drawing
 		byte color_index = decoded[px_y][px_x];
 		bg_window_color[ly][screen_x] = color_index;
-		framebuffer[ly][screen_x] = to_pixel(bg_palette.get_current_colour(color_index));
-
+		
+		if (bus.is_gbc) {
+			byte palette_num = GBC_attributes & 0x07;
+			framebuffer[ly][screen_x] = cgb_bg_color_to_pixel(palette_num, color_index);
+		}
+		else {
+			framebuffer[ly][screen_x] = to_pixel(bg_palette.get_current_colour(color_index));
+		}
 	}
 
 	window_line_counter++; 
 }
-
 
 void PPU::render_row_sprites(byte ly){
 	if (!(LCDC & 0x02)) return;
@@ -350,6 +367,91 @@ void PPU::render_row_sprites(byte ly){
 	}
 
 
+}
+
+void PPU::draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte attributes, byte height) {
+
+	sword screen_y = y_pos - 16;
+	sword screen_x = x_pos - 8;
+
+	if (screen_y >= 144 || screen_y + height <= 0) return;
+	if (screen_x >= 160 || screen_x + 8 <= 0) return;
+
+	sbyte row_in_sprite = ly - screen_y; 
+
+	// Y flip across whole sprite
+	if (attributes & 0x40) {
+		row_in_sprite = (height - 1) - row_in_sprite;
+	}
+
+	byte tile_id;
+	byte row_in_tile;
+
+	if (height == 16) {
+		if (row_in_sprite < 8) {
+			tile_id = tile_index & 0xFE; // top tile
+			row_in_tile = row_in_sprite;
+		}
+		else {
+			tile_id = tile_index | 0x01; // bottom tile
+			row_in_tile = row_in_sprite - 8;
+		}
+	}
+	else {
+		tile_id = tile_index;
+		row_in_tile = row_in_sprite;
+	}
+
+	byte data_bank = 0;
+	if (bus.is_gbc && (attributes & 0x08)) {
+		data_bank = 1;
+	}
+
+	tile decoded = decode_tile(get_tile_data(data_bank, 0x8000, tile_id));
+
+	for (byte pixel_x = 0; pixel_x < 8; pixel_x++) {
+
+		sword draw_x = screen_x + pixel_x;
+		if (draw_x < 0 || draw_x >= 160) continue;
+
+		int sprite_x = pixel_x;
+		if (attributes & 0x20) {
+			sprite_x = 7 - sprite_x; // X flip
+		}
+
+		byte color_index = decoded[row_in_tile][sprite_x];
+
+		if (color_index == 0) continue; // sprite-transparent
+
+
+		bool bg_has_priority = false;
+		if (bus.is_gbc) {
+			if ((LCDC & 0x01) && (attributes & 0x80) && bg_window_color[ly][draw_x] != 0) {
+				bg_has_priority = true;
+			}
+		}
+		else {
+			if ((attributes & 0x80) && bg_window_color[ly][draw_x] != 0) {
+				bg_has_priority = true;
+			}
+		}
+		if (bg_has_priority) 
+			continue;
+
+
+		if (bus.is_gbc) {
+			byte palette_num = attributes & 0x07; 
+			framebuffer[ly][draw_x] = cgb_obj_color_to_pixel(palette_num, color_index); 
+		}
+		else if (attributes & 0x10) {
+			framebuffer[ly][draw_x] = to_pixel(obj1_palette.get_current_colour(color_index));
+		}
+		else {
+			set_rend_col(obj0_palette.get_current_colour(color_index));
+			framebuffer[ly][draw_x] = to_pixel(obj0_palette.get_current_colour(color_index));
+
+		}
+	}
 }
 
 
@@ -423,66 +525,6 @@ void PPU::sort_sprites_x(std::vector<word>& sprites){
 	}
 }
 
-void PPU::draw_sprite(byte ly, byte y_pos, byte x_pos, byte tile_index, byte attributes, byte height) {
-
-	sword screen_y = y_pos - 16;
-	sword screen_x = x_pos - 8;
-
-	if (screen_y >= 144 || screen_y + height <= 0) return;
-	if (screen_x >= 160 || screen_x + 8 <= 0) return;
-
-	sbyte row_in_sprite = ly - screen_y; 
-
-	// Y flip across whole sprite
-	if (attributes & 0x40) {
-		row_in_sprite = (height - 1) - row_in_sprite;
-	}
-
-	byte tile_id;
-	byte row_in_tile;
-
-	if (height == 16) {
-		if (row_in_sprite < 8) {
-			tile_id = tile_index & 0xFE; // top tile
-			row_in_tile = row_in_sprite;
-		}
-		else {
-			tile_id = tile_index | 0x01; // bottom tile
-			row_in_tile = row_in_sprite - 8;
-		}
-	}
-	else {
-		tile_id = tile_index;
-		row_in_tile = row_in_sprite;
-	}
-
-	tile decoded = decode_tile(get_tile_data(0x8000, tile_id));
-
-	for (byte pixel_x = 0; pixel_x < 8; pixel_x++) {
-
-		sword draw_x = screen_x + pixel_x;
-		if (draw_x < 0 || draw_x >= 160) continue;
-
-		int sprite_x = pixel_x;
-		if (attributes & 0x20) {
-			sprite_x = 7 - sprite_x; // X flip
-		}
-
-		byte color_index = decoded[row_in_tile][sprite_x];
-
-		if (color_index == 0) continue; // sprite-transparent
-		if ((attributes & 0x80) && bg_window_color[ly][draw_x] != 0) continue; // bg priority
-
-		if (attributes & 0x10) {
-			framebuffer[ly][draw_x] = to_pixel(obj1_palette.get_current_colour(color_index));
-		}
-		else {
-			set_rend_col(obj0_palette.get_current_colour(color_index));
-			framebuffer[ly][draw_x] = to_pixel(obj0_palette.get_current_colour(color_index));
-
-		}
-	}
-}
 
 void PPU::check_lyc() {
 	bool coincidence = (ly == LYC);
@@ -568,6 +610,20 @@ uint32_t PPU::cgb_bg_color_to_pixel(byte palette_num, byte color_index) {
 
 }
 
+uint32_t PPU::cgb_obj_color_to_pixel(byte palette_num, byte color_index) {
+	size_t offset = palette_num * 8 + color_index * 2;
+
+	byte lo = obj_palette_ram[offset];
+	byte hi = obj_palette_ram[offset + 1];
+	word raw = lo | (hi << 8);
+
+	byte r8 = ((raw & 0x1F) * 255) / 31;
+	byte g8 = (((raw >> 5) & 0x1F) * 255) / 31;
+	byte b8 = (((raw >> 10) & 0x1F) * 255) / 31;
+
+	return (0xFF << 24) | (r8 << 16) | (g8 << 8) | b8;
+}
+
 
 
 
@@ -591,6 +647,14 @@ void PPU::serialize(std::ofstream& out) {
 	out.write(reinterpret_cast<char*>(&bg_palette), sizeof(bg_palette));
 	out.write(reinterpret_cast<char*>(&obj0_palette), sizeof(obj0_palette));
 	out.write(reinterpret_cast<char*>(&obj1_palette), sizeof(obj1_palette));
+
+	out.write(reinterpret_cast<char*>(bg_palette_ram), sizeof(bg_palette_ram));
+	out.write(reinterpret_cast<char*>(&bgpi_index), sizeof(bgpi_index));
+	out.write(reinterpret_cast<char*>(&bgpi_auto_increment), sizeof(bgpi_auto_increment));
+
+	out.write(reinterpret_cast<char*>(obj_palette_ram), sizeof(obj_palette_ram));
+	out.write(reinterpret_cast<char*>(&obpi_index), sizeof(obpi_index));
+	out.write(reinterpret_cast<char*>(&obpi_auto_increment), sizeof(obpi_auto_increment));
 
 	for (auto& row : bg_window_color) {
 		out.write(reinterpret_cast<char*>(row.data()), row.size());
@@ -617,6 +681,15 @@ void PPU::deserialize(std::ifstream& in) {
 	in.read(reinterpret_cast<char*>(&bg_palette), sizeof(bg_palette));
 	in.read(reinterpret_cast<char*>(&obj0_palette), sizeof(obj0_palette));
 	in.read(reinterpret_cast<char*>(&obj1_palette), sizeof(obj1_palette));
+
+	in.read(reinterpret_cast<char*>(bg_palette_ram), sizeof(bg_palette_ram));
+	in.read(reinterpret_cast<char*>(&bgpi_index), sizeof(bgpi_index));
+	in.read(reinterpret_cast<char*>(&bgpi_auto_increment), sizeof(bgpi_auto_increment));
+
+	in.read(reinterpret_cast<char*>(obj_palette_ram), sizeof(obj_palette_ram));
+	in.read(reinterpret_cast<char*>(&obpi_index), sizeof(obpi_index));
+	in.read(reinterpret_cast<char*>(&obpi_auto_increment), sizeof(obpi_auto_increment));
+
 
 	for (auto& row : bg_window_color) {
 		in.read(reinterpret_cast<char*>(row.data()), row.size());
