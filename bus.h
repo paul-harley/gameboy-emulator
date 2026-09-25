@@ -60,11 +60,20 @@ private:
 	byte boot_rom[0x900];
 	void set_mbc(byte cart_type);
 
+	byte hdma_source_high = 0;
+	byte hdma_source_low = 0;
+	byte hdma_dest_high = 0;
+	byte hdma_dest_low = 0;
+	byte hdma_length = 0x7F; // unstarted transfer reads back as 0xFF
+	bool hdma_active = false;
+	bool hdma_hblank_mode = false;
+
+
 public:
 	std::unique_ptr<MBC> mbc;
 	word last_pc = 0;
 	byte* test_ram_override = nullptr;
-	bool is_gbc = true;
+	bool is_gbc = false;
 	byte current_vram_bank = 0;
 	byte current_wram_bank = 1;
 
@@ -92,10 +101,12 @@ public:
 	int transfer_cycles_remaining = 0;
 	void serial_tick(int t_cycles);
 
+	void hdma_step();
 
 	byte read_memory(word address);
 	void write_memory(word address, byte data);
 	byte read_vram_bank(byte bank, word address);
+	void write_vram_bank(byte bank, word address, byte data);
 
 	void dump_memory(word start_loc, byte num_bytes);
 	void load_rom(const std::string filename);

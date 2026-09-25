@@ -563,6 +563,10 @@ void PPU::update_stat_mode() {
 		current_mode = new_mode;
 		STAT = (STAT & 0xFC) | new_mode; // update mode bits 0-1
 
+		if (new_mode == 0) {
+			bus.hdma_step(); // now fires exactly once per genuine entry into HBlank
+		}
+
 		bool fire = false;
 		switch (new_mode) {
 		case 0: fire = STAT & 0x08; break; // Mode 0 HBlank interrupt enable

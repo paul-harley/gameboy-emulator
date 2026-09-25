@@ -107,6 +107,30 @@ byte Bus::read_memory(word address) {
 	case 0xFF4B:
 		return ppu.WX;
 
+	case 0xFF51:
+		return hdma_source_high;
+	case 0xFF52:
+		return hdma_source_low;
+	case 0xFF53:
+		return hdma_dest_high;
+	case 0xFF54:
+		return hdma_dest_low;
+	case 0xFF55:{
+		byte remaining;
+		byte status_bit;
+
+		if (hdma_active) {
+			remaining = hdma_length;
+			status_bit = 0x00;
+		}
+		else {
+			remaining = hdma_length;
+			status_bit = 0x80;
+		}
+
+		return status_bit | (remaining & 0x7F);
+	}
+
 	case 0xFF68: 
 		return ppu.read_bgpi();
 	case 0xFF69: 
@@ -269,6 +293,50 @@ void Bus::write_memory(word address, byte data) {
 		return;
 	}
 
+	case 0xFF51:
+		hdma_source_high = data;
+		return;
+	case 0xFF52:
+		hdma_source_low = data & 0xF0;
+		return;
+	case 0xFF53:
+		hdma_dest_high = data & 0x1F;
+		return;
+	case 0xFF54:
+		hdma_dest_low = data & 0xF0;
+		return;
+	case 0xFF55: {
+		bool new_hblank_mode = (data & 0x80) != 0;
+
+		if (!new_hblank_mode && hdma_active && hdma_hblank_mode) {
+			// cancel in progress HBlank transfer
+			hdma_active = false;
+			return;
+		}
+
+		word source = (hdma_source_high << 8) | (hdma_source_low & 0xF0);
+		word dest = 0x8000 | ((hdma_dest_high & 0x1F) << 8) | (hdma_dest_low & 0xF0);
+
+		hdma_length = (data & 0x7F); // number of 16 byte blocks minus 1
+		hdma_hblank_mode = (data & 0x80) != 0;
+
+		if (!hdma_hblank_mode) {
+			// do the whole transfer instantly
+			int total_bytes = (hdma_length + 1) * 16;
+			for (int i = 0; i < total_bytes; i++) {
+				byte value = read_memory(source + i);
+				write_vram_bank(current_vram_bank, dest + i, value);
+			}
+			hdma_active = false;
+		}
+		else {
+			hdma_active = true;
+		}
+
+		return;
+	}
+
+
 	case 0xFF70: {
 		byte bank = data & 0x07;
 		if (bank == 0) bank = 1;
@@ -308,10 +376,43 @@ void Bus::write_memory(word address, byte data) {
 
 }
 
+void Bus::hdma_step() {
+	if (!hdma_active || !hdma_hblank_mode) return;
+
+	word source = (hdma_source_high << 8) | (hdma_source_low & 0xF0);
+	word dest = 0x8000 | ((hdma_dest_high & 0x1F) << 8) | (hdma_dest_low & 0xF0);
+
+	for (int i = 0; i < 16; i++) {
+		byte value = read_memory(source + i);
+		write_vram_bank(current_vram_bank, dest + i, value);
+	}
+
+	// advance by 16 bytes for the next block
+	word new_source = source + 16;
+	hdma_source_high = new_source >> 8;
+	hdma_source_low = new_source & 0xFF;
+
+	word new_dest = dest + 16;
+	hdma_dest_high = (new_dest >> 8) & 0x1F;
+	hdma_dest_low = new_dest & 0xFF;
+
+	if (hdma_length == 0) {
+		hdma_active = false; // that was the last block
+	}
+	else {
+		hdma_length--;
+	}
+}
 
 byte Bus::read_vram_bank(byte bank, word address) {
 	size_t offset = (size_t)bank * 0x2000 + (address - 0x8000);
 	return main_memory[2]->memory[offset];
+}
+
+void Bus::write_vram_bank(byte bank, word address, byte data) {
+	size_t offset = (size_t)bank * 0x2000 + (address - 0x8000);
+	main_memory[2]->memory[offset] = data;
+	return;
 }
 
 
@@ -378,6 +479,9 @@ void Bus::load_rom(const std::string filename) {
 
 	mbc->set_battery_save_path(battery_path);
 	mbc->load_battery_save();
+
+	byte cgb_flag = rom_data[0x0143];
+	is_gbc = (cgb_flag == 0x80 || cgb_flag == 0xC0);
 
 
 	std::cout << "ROM LOADED!\n";
@@ -462,6 +566,14 @@ void Bus::serialize(std::ofstream& out) {
 	out.write(reinterpret_cast<char*>(&current_vram_bank), sizeof(current_vram_bank));
 	out.write(reinterpret_cast<char*>(&current_wram_bank), sizeof(current_wram_bank));
 
+	out.write(reinterpret_cast<char*>(&hdma_source_high), sizeof(hdma_source_high));
+	out.write(reinterpret_cast<char*>(&hdma_source_low), sizeof(hdma_source_low));
+	out.write(reinterpret_cast<char*>(&hdma_dest_high), sizeof(hdma_dest_high));
+	out.write(reinterpret_cast<char*>(&hdma_dest_low), sizeof(hdma_dest_low));
+	out.write(reinterpret_cast<char*>(&hdma_length), sizeof(hdma_length));
+	out.write(reinterpret_cast<char*>(&hdma_active), sizeof(hdma_active));
+	out.write(reinterpret_cast<char*>(&hdma_hblank_mode), sizeof(hdma_hblank_mode));
+
 	mbc->serialize(out); 
 }
 
@@ -478,6 +590,14 @@ void Bus::deserialize(std::ifstream& in) {
 
 	in.read(reinterpret_cast<char*>(&current_vram_bank), sizeof(current_vram_bank));
 	in.read(reinterpret_cast<char*>(&current_wram_bank), sizeof(current_wram_bank));
+
+	in.read(reinterpret_cast<char*>(&hdma_source_high), sizeof(hdma_source_high));
+	in.read(reinterpret_cast<char*>(&hdma_source_low), sizeof(hdma_source_low));
+	in.read(reinterpret_cast<char*>(&hdma_dest_high), sizeof(hdma_dest_high));
+	in.read(reinterpret_cast<char*>(&hdma_dest_low), sizeof(hdma_dest_low));
+	in.read(reinterpret_cast<char*>(&hdma_length), sizeof(hdma_length));
+	in.read(reinterpret_cast<char*>(&hdma_active), sizeof(hdma_active));
+	in.read(reinterpret_cast<char*>(&hdma_hblank_mode), sizeof(hdma_hblank_mode));
 
 	mbc->deserialize(in);
 }

@@ -4,10 +4,6 @@
 
 void Gameboy::load_rom(const std::string& path) {
 
-    //bus.load_boot_rom("roms/boot_rom.bin", 256);
-    bus.load_boot_rom("roms/cgb0_boot.bin", 0x900);
-
-
     cpu.regs.PC = 0x0000;         // start at the real reset vector, not 0x0100
     cpu.regs.SP = 0x0000;         // boot rom sets this itself
     cpu.regs.regs_8b[A] = cpu.regs.regs_8b[F] = cpu.regs.regs_8b[B] =
@@ -21,6 +17,12 @@ void Gameboy::load_rom(const std::string& path) {
     cpu.reset();
 
 	bus.load_rom(path);
+    if (bus.is_gbc) {
+        bus.load_boot_rom("roms/cgb0_boot.bin", 0x900);
+    }
+    else {
+        bus.load_boot_rom("roms/boot_rom.bin", 256);
+    }
 }
 
 void Gameboy::run() {
@@ -183,9 +185,11 @@ void Gameboy::poll_events(bool& running, SDL_Event& event,  bool& logging_enable
 
                     if (f5_held) {
                         save_state(get_save_state_path(slot));
+                        std::cout << "Saved on slot: " << slot << std::endl;
                     }
                     else if (f9_held) {
                         load_state(get_save_state_path(slot));
+                        std::cout << "Loaded from slot: " << slot << std::endl;
                     }
                     else {
                         std::cout << "Hold F5 (save) or F9 (load) and press a number key\n";
